@@ -1,0 +1,20 @@
+{
+  "name": "hicetnunc-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "ipfs-api": "^26.1.2",
+    "lodash": "^4.17.21",
+    "serverless-http": "^2.6.0",
+    "serverless-plugin-include-dependencies": "^4.1.0"
+  }
+}
