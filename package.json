@@ -1,0 +1,26 @@
+{
+  "name": "hicetnunc-apiv2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hicetnunc2000/hicetnunc.git"
+  },
+  "author": "@hicetnunc2000",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hicetnunc2000/hicetnunc/issues"
+  },
+  "homepage": "https://github.com/hicetnunc2000/hicetnunc#readme",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "lodash": "^4.17.21",
+    "serverless-http": "^2.7.0"
+  }
+}

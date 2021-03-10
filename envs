@@ -1,0 +1,4 @@
+  GNU nano 4.8                                                                 .env                                                                  Modified  
+REACT_APP_FEED='https://51rknuvw76.execute-api.us-east-1.amazonaws.com/dev/feed'
+REACT_APP_TZ='https://51rknuvw76.execute-api.us-east-1.amazonaws.com/dev/tz'
+REACT_APP_OBJKT='https://51rknuvw76.execute-api.us-east-1.amazonaws.com/dev/objkt'
