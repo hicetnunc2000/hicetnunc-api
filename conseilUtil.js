@@ -7,7 +7,7 @@ logger.setLevel('error', false)
 conseiljs.registerLogger(logger)
 conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
-const conseilApiKey = '' // signup at nautilus.cloud
+const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
 
 const mainnet = require('./config').networkConfig
 
@@ -28,12 +28,11 @@ const getCollectionForAddress = async (address) => {
     collectionQuery = conseiljs.ConseilQueryBuilder.setLimit(collectionQuery, 10_000)
 
     const collectionResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', collectionQuery);
-
     const collection = collectionResult.map((i) => {
         return { piece: i.key.toString().replace(/.* ([0-9]{1,}$)/, '$1'), amount: Number(i.value) }
     })
 
-    console.log('collection', collection)
+    //console.log('collection', collection)
 
     return collection;
 }
@@ -62,7 +61,7 @@ const getArtisticOutputForAddress = async (address) => {
         'operations',
         mintOperationQuery);
 
-    console.log('mintOperationResult', mintOperationResult)
+    //console.log('mintOperationResult', mintOperationResult)
     const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
     const queryChunks = chunkArray(operationGroupIds, 5)
 
@@ -87,7 +86,7 @@ const getArtisticOutputForAddress = async (address) => {
             return { key: row['key_hash'], objectId, ipfsHash }
     }))))
 
-    console.log('artisticOutput', objectInfo)
+    //console.log('artisticOutput', objectInfo)
 
     return objectInfo
 }

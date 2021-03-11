@@ -2,12 +2,26 @@ const serverless = require('serverless-http')
 const axios = require('axios')
 const express = require('express')
 const cors = require('cors')
+const fetch = require('fetch')
 const _ = require('lodash')
 
 const conseilUtil = require('./conseilUtil')
 
 const reducer = (accumulator, currentValue) => accumulator + currentValue;
 
+const getIpfsHash = async (ipfsHash) => {
+
+    return await axios.get('https://cloudflare-ipfs.com/ipfs/' + ipfsHash).then(res => res.data)
+ /*    const nftDetailJson = await nftDetails.json();
+
+    const nftName = nftDetailJson.name;
+    const nftDescription = nftDetailJson.description;
+    const nftCreators = nftDetailJson.creators.join(', ');
+    const nftArtifact = `https://cloudflare-ipfs.com/ipfs/${nftDetailJson.formats[0].uri.toString().slice(7)}`;
+    const nftArtifactType = nftDetailJson.formats[0].mimeType.toString();
+
+    return { name: nftName, description: nftDescription, creators: nftCreators, artifactUrl: nftArtifact, artifactType: nftArtifactType }; */
+}
 const getObjkts = async () => {
     return await axios.get(`https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens`).then(res => res.data)
 }
@@ -121,14 +135,23 @@ const filterObjkts = (arr, id_arr) => _.filter(arr, { token_id : tk.id })
 //console.log(_.find(ledger, { tz : 'KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'}))
 
 const getTzLedger = async (tz) => {
-    var ledger = desc(await getObjktLedger())
+/*     var ledger = desc(await getObjktLedger())
     var objkts = await getObjkts()
     var tzLedger = _.map(filterTz(ledger, tz), (obj) => _.assign(obj, _.find(objkts, { token_id : obj.tk_id })))
+ */
+    var result1 = await conseilUtil.getCollectionForAddress(tz)
+    var result2 = await conseilUtil.getArtisticOutputForAddress(tz)
 
-    //conseilUtil.getCollectionForAddress(tz);
-    //conseilUtil.getArtisticOutputForAddress(tz);
+    var creations = result2[0].map(async e => {
+        e.token_info = await getIpfsHash(e.ipfsHash)
+        return e
+    })
 
-    return tzLedger
+    var promiseCreations = Promise.all(creations.map(e => e))
+    promiseCreations.then(results => results.map(e=>console.log(e)))    
+
+
+    //return tzLedger
 }
 
 const getObjktById = async (id, res) => {
@@ -149,12 +172,12 @@ const getObjktById = async (id, res) => {
 //getObjkts()
 //testSwaps()
 //getFeed(0)
-//getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
+getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
 
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
-const app = express()
+/* const app = express()
 
 app.use(express.json())
 app.use(cors({ origin: '*' }))
@@ -170,10 +193,10 @@ app.post('/tz', async (req, res) => {
 
 app.post('/objkt', async (req, res) => {
     await getObjktById(parseInt(req.body.objkt_id), res)
-})
+}) */
 
 //app.listen(3001)
-module.exports.handler = serverless(app)
+//module.exports.handler = serverless(app)
 
 //testTkHolder([{'kt' : 2020}, {'kt' : 2021}])
 //getFeed(1)
