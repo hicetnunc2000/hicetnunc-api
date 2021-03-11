@@ -11,6 +11,12 @@ const conseilApiKey = '' // signup at nautilus.cloud
 
 const mainnet = require('./config').networkConfig
 
+/**
+ * Returns a list of nft token ids and amounts that a given address owns.
+ * 
+ * @param {string} address 
+ * @returns 
+ */
 const getCollectionForAddress = async (address) => {
     let collectionQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     collectionQuery = conseiljs.ConseilQueryBuilder.addFields(collectionQuery, 'key', 'value');
@@ -32,11 +38,17 @@ const getCollectionForAddress = async (address) => {
     return collection;
 }
 
+/**
+ * Queries Conseil in two steps to get all the objects minted by a specific address. Step 1 is to query for all 'mint_OBJKT' operations performed by the account to get the list of operation group hashes. Then that list is partitioned into chunks and another query (or set of queries) is run to get big_map values. These values are then parsed into an array of 3-tuples containing the hashed big_map key that can be used to query a Tezos node directly, the nft token id and the ipfs item hash.
+ * 
+ * @param {string} address 
+ * @returns 
+ */
 const getArtisticOutputForAddress = async (address) => {
     let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
@@ -52,7 +64,7 @@ const getArtisticOutputForAddress = async (address) => {
 
     console.log('mintOperationResult', mintOperationResult)
     const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
-    const queryChunks = chunkArray(operationGroupIds, 3)
+    const queryChunks = chunkArray(operationGroupIds, 5)
 
     const makeObjectQuery = (opIds) => {
         let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
