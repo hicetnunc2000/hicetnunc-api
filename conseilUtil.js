@@ -7,7 +7,7 @@ logger.setLevel('error', false)
 conseiljs.registerLogger(logger)
 conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
-const conseilApiKey = 'galleon' // signup at nautilus.cloud
+const conseilApiKey = '' // signup at nautilus.cloud
 
 const mainnet = require('./config').networkConfig
 
