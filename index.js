@@ -1,24 +1,10 @@
-
 const serverless = require('serverless-http')
 const axios = require('axios')
 const express = require('express')
 const cors = require('cors')
 const _ = require('lodash')
 
-const mainnet = {
-    objkts: 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton',
-    ledgerPtr: 511,
-    metadataPtr: 514,
-    network: 'mainnet',
-    protocol: 'KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9',
-    swapsPtr: 523,
-    hDAO: 'KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW',
-    curations: 'KT1TybhR7XraG75JFYKSrh7KnxukMBT5dor6',
-    curationsPtr: 519,
-    royaltiesPtr: 522,
-    ledgerPtr2: 515
-
-}
+const conseilUtil = require('./conseilUtil')
 
 const reducer = (accumulator, currentValue) => accumulator + currentValue;
 
@@ -138,6 +124,10 @@ const getTzLedger = async (tz) => {
     var ledger = desc(await getObjktLedger())
     var objkts = await getObjkts()
     var tzLedger = _.map(filterTz(ledger, tz), (obj) => _.assign(obj, _.find(objkts, { token_id : obj.tk_id })))
+
+    //conseilUtil.getCollectionForAddress(tz);
+    //conseilUtil.getArtisticOutputForAddress(tz);
+
     return tzLedger
 }
 

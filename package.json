@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -18,9 +18,12 @@
   "homepage": "https://github.com/hicetnunc2000/hicetnunc#readme",
   "dependencies": {
     "axios": "^0.21.1",
+    "conseiljs": "5.0.7-2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "lodash": "^4.17.21",
+    "loglevel": "1.7.1",
+    "node-fetch": "2.6.1",
     "serverless-http": "^2.7.0"
   }
 }
