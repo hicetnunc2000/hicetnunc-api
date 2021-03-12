@@ -2,7 +2,6 @@ const serverless = require('serverless-http')
 const axios = require('axios')
 const express = require('express')
 const cors = require('cors')
-const fetch = require('fetch')
 const _ = require('lodash')
 
 const conseilUtil = require('./conseilUtil')
@@ -134,22 +133,36 @@ const getFeed = async (counter, res) => {
 const filterObjkts = (arr, id_arr) => _.filter(arr, { token_id : tk.id })
 //console.log(_.find(ledger, { tz : 'KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'}))
 
-const getTzLedger = async (tz) => {
+const getTzLedger = async (tz, res) => {
 /*     var ledger = desc(await getObjktLedger())
     var objkts = await getObjkts()
     var tzLedger = _.map(filterTz(ledger, tz), (obj) => _.assign(obj, _.find(objkts, { token_id : obj.tk_id })))
  */
-    var result1 = await conseilUtil.getCollectionForAddress(tz)
-    var result2 = await conseilUtil.getArtisticOutputForAddress(tz)
+    var collection = await conseilUtil.getCollectionForAddress(tz)
+    var creations = await conseilUtil.getArtisticOutputForAddress(tz)
 
-    var creations = result2[0].map(async e => {
+    var arr = []
+
+    var arr = _.union(collection, creations[0])
+
+    var result = arr.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
+        if (e.piece != undefined) {
+            e.token_id = parseInt(e.piece)
+        } else {
+            e.token_id = parseInt(e.objectId)
+        }
         return e
     })
 
-    var promiseCreations = Promise.all(creations.map(e => e))
-    promiseCreations.then(results => results.map(e=>console.log(e)))    
-
+    var promise = Promise.all(result.map(e => e))
+    promise.then(results => {
+        var result = results.map(e => e)
+        console.log(result)
+        res.json({ result : _.uniqBy(result, (e) => { 
+            return e.token_id 
+        })})
+    })    
 
     //return tzLedger
 }
@@ -172,12 +185,12 @@ const getObjktById = async (id, res) => {
 //getObjkts()
 //testSwaps()
 //getFeed(0)
-getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
+//getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
 
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
-/* const app = express()
+const app = express()
 
 app.use(express.json())
 app.use(cors({ origin: '*' }))
@@ -188,14 +201,15 @@ app.post('/feed', async (req, res) => {
 
 app.post('/tz', async (req, res) => {
     console.log(req.body.tz)
-    res.json({ result : await getTzLedger(req.body.tz) }) 
+    await getTzLedger(req.body.tz, res)
+    //res.json({ result : await getTzLedger(req.body.tz) }) 
 })
 
 app.post('/objkt', async (req, res) => {
     await getObjktById(parseInt(req.body.objkt_id), res)
-}) */
+})
 
-//app.listen(3001)
+app.listen(3001)
 //module.exports.handler = serverless(app)
 
 //testTkHolder([{'kt' : 2020}, {'kt' : 2021}])
