@@ -8,6 +8,7 @@ conseiljs.registerLogger(logger)
 conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
+const tezosNode = ''
 
 const mainnet = require('./config').networkConfig
 
@@ -32,9 +33,15 @@ const getCollectionForAddress = async (address) => {
         return { piece: i.key.toString().replace(/.* ([0-9]{1,}$)/, '$1'), amount: Number(i.value) }
     })
 
-    //console.log('collection', collection)
+    // const packedKey = TezosMessageUtils.encodeBigMapKey(Buffer.from(TezosMessageUtils.writePackedData(address, 'address'), 'hex'));
 
-    return collection;
+    // const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
+    // const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
+    //return { key: row['key_hash'], objectId, ipfsHash }
+
+    // console.log('collection', collection)
+
+    return collection.sort((a, b) => parseInt(b.piece) - parseInt(a.piece)) // sort descending by id – most-recently minted art first
 }
 
 /**
@@ -61,16 +68,15 @@ const getArtisticOutputForAddress = async (address) => {
         'operations',
         mintOperationQuery);
 
-    //console.log('mintOperationResult', mintOperationResult)
     const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
-    const queryChunks = chunkArray(operationGroupIds, 5)
+    const queryChunks = chunkArray(operationGroupIds, 10)
 
     const makeObjectQuery = (opIds) => {
         let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addFields(mintedObjectsQuery, 'key_hash', 'value');
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintedObjectsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftMetadataMap])
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintedObjectsQuery, 'operation_group_id', (opIds.length > 1 ? conseiljs.ConseilOperator.IN : conseiljs.ConseilOperator.EQ), opIds)
-        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.setLimit(mintedObjectsQuery, 100)
+        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.setLimit(mintedObjectsQuery, opIds.length)
 
         return mintedObjectsQuery
     }
@@ -86,25 +92,72 @@ const getArtisticOutputForAddress = async (address) => {
             return { key: row['key_hash'], objectId, ipfsHash }
     }))))
 
-    //console.log('artisticOutput', objectInfo)
-
     return objectInfo
 }
 
+const getArtisticUniverse = async () => {
+    // TODO
+    // Pair 4328 { Elt "" 0x697066733a2f2f516d62524d42525641477655423961505a686732446941785867717756414b4468786b6a383170416268774e6972 }
+}
+
+const getObjectById = async (objectId) => {
+    let objectQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    objectQuery = conseiljs.ConseilQueryBuilder.addFields(objectQuery, 'value');
+    objectQuery = conseiljs.ConseilQueryBuilder.addPredicate(objectQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftMetadataMap])
+    objectQuery = conseiljs.ConseilQueryBuilder.addPredicate(objectQuery, 'key', conseiljs.ConseilOperator.EQ, [objectId])
+    objectQuery = conseiljs.ConseilQueryBuilder.setLimit(objectQuery, 1)
+
+    const objectResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', objectQuery)
+
+    const objectUrl = objectResult[0]['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
+    const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
+
+    let swapsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value');
+    swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftSwapMap])
+    swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'value', conseiljs.ConseilOperator.LIKE, [`) (Pair ${objectId} `])
+    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 1000) // NOTE, limited to 1000 swaps for a given object
+
+    const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', swapsQuery)
+    const swapStoragePattern = new RegExp(`Pair [(]Pair 0x([0-9a-z]{44}) ([0-9]+)[)] [(]Pair ${objectId} ([0-9]+)[)]`);
+
+    let swaps = []
+    try {
+        swapsResult.map(row => {
+            const match = swapStoragePattern.exec(row['value'])
+
+            swaps.push({
+                swapid: row['key'],
+                address: conseiljs.TezosMessageUtils.readAddress(match[1]),
+                amount: match[2],
+                price: match[3]
+            })
+        })
+    } catch (error) {
+        console.log(`${error}`)
+    }
+
+    return {
+        objectId,
+        ipfsHash,
+        swaps
+    }
+}
 
 const chunkArray = (arr, len) => { // TODO: move to util.js
     let chunks = [],
         i = 0,
         n = arr.length;
-  
+
     while (i < n) {
         chunks.push(arr.slice(i, i += len));
     }
-  
+
     return chunks;
 }
 
 module.exports = {
     getCollectionForAddress,
-    getArtisticOutputForAddress
+    getArtisticOutputForAddress,
+    getObjectById
 }
