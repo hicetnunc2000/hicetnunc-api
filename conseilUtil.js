@@ -125,6 +125,7 @@ const getArtisticUniverse = async () => {
  * @param {number} objectId 
  * @returns 
  */
+
 const getObjectById = async (objectId) => {
     let objectQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     objectQuery = conseiljs.ConseilQueryBuilder.addFields(objectQuery, 'value');
@@ -152,10 +153,10 @@ const getObjectById = async (objectId) => {
             const match = swapStoragePattern.exec(row['value'])
 
             swaps.push({
-                swapid: row['key'],
-                address: conseiljs.TezosMessageUtils.readAddress(match[1]),
-                amount: match[2],
-                price: match[3]
+                swap_id: row['key'],
+                issuer: conseiljs.TezosMessageUtils.readAddress(match[1]),
+                objkt_amount: match[2],
+                xtz_per_objkt: match[3]
             })
         })
     } catch (error) {

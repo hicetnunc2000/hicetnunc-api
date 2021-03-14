@@ -67,9 +67,15 @@ const objktOwners = async (arr) => {
 
 
 const getObjktLedger = async () => await axios.get('https://better-call.dev/v1/bigmap/mainnet/511/keys?size=6500').then(res => res.data.map(e => ({ amount: parseInt(e.data.value.value), tz: e.data.key.children[0].value, tk_id: parseInt(e.data.key.children[1].value) })))
+const gethDAOLedger = async () => await axios.get('https://api.better-call.dev/v1/bigmap/mainnet/519/keys?size=4000').then(res => res.data.map(e => {
+    return { token_id : parseInt(e.data.key.value), hDAO_balance : parseInt(e.data.value.children[0].value) }
+}))
+
+gethDAOLedger()
+
 
 const getSwaps = async () => {
-    return await axios.get(`https://api.better-call.dev/v1/bigmap/mainnet/523/keys?size=5000`).then(res => {
+    return await axios.get(`https://api.better-call.dev/v1/bigmap/mainnet/523/keys?size=6000`).then(res => {
         return (res.data).map(e => {
             var obj = {}
         
@@ -126,10 +132,11 @@ const getFeed = async (counter, res) => {
     
     promise.then((results) => {
         var aux_arr = results.map(e => e)
+        //console.log(aux_arr)
         res.json({ result : aux_arr })
     })
 }
-
+//getFeed(1)
 const filterObjkts = (arr, id_arr) => _.filter(arr, { token_id : tk.id })
 //console.log(_.find(ledger, { tz : 'KT1Hkg5qeNhfwpKW4fXvq7HGZB9z2EnmCCA9'}))
 
@@ -168,25 +175,50 @@ const getTzLedger = async (tz, res) => {
 }
 
 const getObjktById = async (id, res) => {
-    var objkts = await getObjkts()
+    var objkt = await conseilUtil.getObjectById(id)
+    objkt.token_id = objkt.objectId
+    objkt = await totalAmountIntegral(objkt)
+    objkt.token_info = await getIpfsHash(objkt.ipfsHash)
+    //console.log(objkt)
+    //return objkt
+    //res.json({ result : objkt })
+    //var objkts = await getObjkts()
     var swaps = await getSwaps()
+    res.json({ result : mergeSwaps([objkt], swaps)[0] })
     //console.log(_.filter(mergeSwaps(objkts, swaps), {token_id : id}))
-    var arr = await objktOwners(_.filter(mergeSwaps(objkts, swaps), {token_id : id}))
-    var promise = Promise.all(arr.map(e => e))
+ //   var arr = await objktOwners(_.filter(mergeSwaps(objkts, swaps), {token_id : id}))
+ //   var promise = Promise.all(arr.map(e => e))
     
-    promise.then((results) => {
+/*     promise.then((results) => {
         var aux_arr = results.map(e => e)
         console.log(aux_arr)
         res.json({ result : aux_arr })
-    })
+    }) */
     //https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=842
+}
+
+const mergehDAO = async (obj) => {
+    var obj_aux = await getObjktById(obj.token_id)
+    obj_aux.hDAO_balance = obj.hDAO_balance
+    return obj_aux
+}
+
+const hDAOFeed = async (counter, res) => {
+    var hDAO = await gethDAOLedger()
+    var arr = _.orderBy(hDAO, ['hDAO_balance'], ['desc'])
+    var objkts = await arr.map(async e => await mergehDAO(e))
+    var promise = Promise.all(objkts.map(e => e))
+    promise.then(results => {
+        var result = results.map(e => e)
+        res.json({ result : offset(result, counter) })
+    })
 }
 
 //getObjkts()
 //testSwaps()
 //getFeed(0)
 //getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
-
+//getObjktById(4441)
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
@@ -206,11 +238,15 @@ app.post('/tz', async (req, res) => {
 })
 
 app.post('/objkt', async (req, res) => {
-    await getObjktById(parseInt(req.body.objkt_id), res)
+    await getObjktById(req.body.objkt_id, res)
 })
 
-app.listen(3001)
-//module.exports.handler = serverless(app)
+app.post('/hdao', async (req, res) => {
+    await hDAOFeed(parseInt(req.body.counter), res)
+})
+
+//app.listen(3001)
+module.exports.handler = serverless(app)
 
 //testTkHolder([{'kt' : 2020}, {'kt' : 2021}])
 //getFeed(1)

@@ -159,7 +159,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hicetnunc-apiv2/dev/1615573503711-2021-03-12T18:25:03.711Z/hicetnunc-apiv2.zip"
+                "S3Key": "serverless/hicetnunc-apiv2/dev/1615707033151-2021-03-14T07:30:33.151Z/hicetnunc-apiv2.zip"
               },
               "FunctionName": "hicetnunc-apiv2-dev-handler",
               "Handler": "index.handler",
@@ -177,14 +177,14 @@
               "HandlerLogGroup"
             ]
           },
-          "HandlerLambdaVersion8Mdy1Iq1WCIWNxBdTydd7iZv7ofc7cNlE6shtzU3JqM": {
+          "HandlerLambdaVersionpuxzjXZdg2oxej79Zkz0mCbPlEe2x5AvJXetNyncUTY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HandlerLambdaFunction"
               },
-              "CodeSha256": "urWtB+TIAAwlg6hvncfRrsg4N8zTzc2wHB/0XYMzOfo="
+              "CodeSha256": "XOR+3dSiXPTki8+z0MjWdw9DENmKT6zIJmruhcmm66I="
             }
           },
           "ApiGatewayRestApi": {
@@ -396,7 +396,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1615573498546": {
+          "ApiGatewayDeployment1615707029161": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -458,7 +458,7 @@
           "HandlerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HandlerLambdaVersion8Mdy1Iq1WCIWNxBdTydd7iZv7ofc7cNlE6shtzU3JqM"
+              "Ref": "HandlerLambdaVersionpuxzjXZdg2oxej79Zkz0mCbPlEe2x5AvJXetNyncUTY"
             }
           },
           "ServiceEndpoint": {
@@ -616,7 +616,7 @@
         "memory": 1024,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "HandlerLambdaVersion8Mdy1Iq1WCIWNxBdTydd7iZv7ofc7cNlE6shtzU3JqM"
+        "versionLogicalId": "HandlerLambdaVersionpuxzjXZdg2oxej79Zkz0mCbPlEe2x5AvJXetNyncUTY"
       }
     },
     "configValidationMode": "warn",
@@ -2507,7 +2507,7 @@
           "node_modules/@types/aws-lambda/trigger/sqs.d.ts"
         ],
         "artifact": "/home/crzy/Desktop/programs/lambdas-aws/hicetnunc-api2/.serverless/hicetnunc-apiv2.zip",
-        "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1615573503711-2021-03-12T18:25:03.711Z"
+        "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1615707033151-2021-03-14T07:30:33.151Z"
       },
       "plugins": {
         "$ref": "$[\"service\"][\"plugins\"]"
@@ -2524,7 +2524,7 @@
     "artifact": "/home/crzy/Desktop/programs/lambdas-aws/hicetnunc-api2/.serverless/hicetnunc-apiv2.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1615573503711-2021-03-12T18:25:03.711Z",
+    "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1615707033151-2021-03-14T07:30:33.151Z",
     "artifact": "hicetnunc-apiv2.zip"
   }
 }
