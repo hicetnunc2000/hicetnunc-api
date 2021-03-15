@@ -164,6 +164,31 @@ const getArtisticUniverse = async (offset) => {
         artistMap[row['key']] = conseiljs.TezosMessageUtils.readAddress(row['value'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1'))
     })
 
+    let swapsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value');
+    swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftSwapMap])
+    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 10_000) // NOTE, limited to 10_000
+
+    const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', swapsQuery)
+
+    const swapStoragePattern = new RegExp(`Pair [(]Pair 0x([0-9a-z]{44}) ([0-9]+)[)] [(]Pair ([0-9]+) ([0-9]+)[)]`);
+    let swapMap = {}
+
+    swapsResult.forEach(row => {
+        swap_id = row['key']
+        const match = swapStoragePattern.exec(row['value'])
+        if (!match) { return; }
+        const amount = match[2]
+        const objkt_id = match[3]
+        const xtz_per_objkt = match[4]
+
+        if (swapMap[row['key']]) {
+            swapMap[row['key']].push({  })
+        } else {
+            swapMap[row['key']] = [{ swap_id, objkt_id, amount, xtz_per_objkt }]
+        }
+    })
+
     const queryChunks = chunkArray(operationGroupIds, 50)
 
     const makeObjectQuery = (opIds) => {
@@ -185,7 +210,7 @@ const getArtisticUniverse = async (offset) => {
             const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
             const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
 
-            universe.push({ objectId, ipfsHash, minter: artistMap[objectId] })
+            universe.push({ objectId, ipfsHash, minter: artistMap[objectId], swaps: swapMap[objectId] })
     }))))
 
     return universe
