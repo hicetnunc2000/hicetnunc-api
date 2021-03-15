@@ -63,6 +63,28 @@ const getCollectionForAddress = async (address) => {
     return collection.sort((a, b) => parseInt(b.piece) - parseInt(a.piece)) // sort descending by id – most-recently minted art first
 }
 
+const gethDaoBalanceForAddress = async (address) => {
+    let hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(hDaoBalanceQuery, 'value');
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.daoLedger])
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'key', conseiljs.ConseilOperator.EQ, [
+        `Pair 0x${conseiljs.TezosMessageUtils.writeAddress(address)} 0`
+    ])
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'value', conseiljs.ConseilOperator.EQ, [0], true)
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(hDaoBalanceQuery, 1)
+
+    let balance = 0
+
+    try {
+        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', hDaoBalanceQuery);
+        balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+    } catch (error) {
+        console.log(`gethDaoBalanceForAddress failed for ${JSON.stringify(hDaoBalanceQuery)} with ${error}`)
+    }
+
+    return balance
+}
+
 /**
  * Queries Conseil in two steps to get all the objects minted by a specific address. Step 1 is to query for all 'mint_OBJKT' operations performed by the account to get the list of operation group hashes. Then that list is partitioned into chunks and another query (or set of queries) is run to get big_map values. These values are then parsed into an array of 3-tuples containing the hashed big_map key that can be used to query a Tezos node directly, the nft token id and the ipfs item hash.
  * 
@@ -115,7 +137,8 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async () => {
-    // TODO
+    
+    
     // Pair 4328 { Elt "" 0x697066733a2f2f516d62524d42525641477655423961505a686732446941785867717756414b4468786b6a383170416268774e6972 }
 }
 
@@ -179,6 +202,7 @@ const chunkArray = (arr, len) => { // TODO: move to util.js
 
 module.exports = {
     getCollectionForAddress,
+    gethDaoBalanceForAddress,
     getArtisticOutputForAddress,
     getObjectById
 }

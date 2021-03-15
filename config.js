@@ -9,7 +9,7 @@ const mainnet = {
     nftSwapMap: 523,
     curationsPtr: 519,
     royaltiesPtr: 522,
-    ledgerPtr2: 515
+    daoLedger: 515
 }
 
 module.exports = {
