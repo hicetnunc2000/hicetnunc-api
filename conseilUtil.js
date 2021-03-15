@@ -1,7 +1,6 @@
 const conseiljs = require('conseiljs')
 const fetch = require('node-fetch')
 const log = require('loglevel')
-const { performance } = require('perf_hooks')
 
 const logger = log.getLogger('conseiljs')
 logger.setLevel('error', false)
@@ -138,8 +137,6 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async (offset) => {
-    var t0 = performance.now()
-
     let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
@@ -157,10 +154,6 @@ const getArtisticUniverse = async (offset) => {
 
     const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
 
-    var t1 = performance.now()
-    console.log(`${operationGroupIds.length} ids in ${(t1 - t0)}ms`)
-
-    var t2 = performance.now()
     let royaltiesQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     royaltiesQuery = conseiljs.ConseilQueryBuilder.addFields(royaltiesQuery, 'key', 'value');
     royaltiesQuery = conseiljs.ConseilQueryBuilder.addPredicate(royaltiesQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftRoyaltiesMap])
@@ -170,10 +163,7 @@ const getArtisticUniverse = async (offset) => {
     royaltiesResult.forEach(row => {
         artistMap[row['key']] = conseiljs.TezosMessageUtils.readAddress(row['value'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1'))
     })
-    var t3 = performance.now()
-    console.log(`${royaltiesResult.length} royalties in ${(t3 - t2)}ms`)
 
-    var t4 = performance.now()
     const queryChunks = chunkArray(operationGroupIds, 50)
 
     const makeObjectQuery = (opIds) => {
@@ -197,8 +187,6 @@ const getArtisticUniverse = async (offset) => {
 
             universe.push({ objectId, ipfsHash, minter: artistMap[objectId] })
     }))))
-    var t5 = performance.now()
-    console.log(`${universe.length} items in ${(t5 - t4)}ms with ${objectQueries.length} queries`)
 
     return universe
 }
