@@ -134,6 +134,8 @@ const getFeed = async (counter, res) => {
         var aux_arr = results.map(e => e)
         //console.log(aux_arr)
         res.json({ result : aux_arr })
+    }).catch(e=>{
+        res.status(500).json({ error : 'downstream API failure' })
     })
 }
 //getFeed(1)
@@ -169,7 +171,9 @@ const getTzLedger = async (tz, res) => {
         res.json({ result : _.uniqBy(result, (e) => { 
             return e.token_id 
         })})
-    })    
+    }).catch(e=>{
+        res.status(500).json({ error : 'downstream API failure' })
+    })
 
     //return tzLedger
 }
@@ -211,6 +215,8 @@ const hDAOFeed = async (counter, res) => {
     promise.then(results => {
         var result = results.map(e => e)
         res.json({ result : offset(result, counter) })
+    }).catch(e=>{
+        res.status(500).json({ error : 'downstream API failure' })
     })
 }
 
