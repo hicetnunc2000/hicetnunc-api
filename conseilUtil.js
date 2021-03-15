@@ -1,6 +1,7 @@
 const conseiljs = require('conseiljs')
 const fetch = require('node-fetch')
 const log = require('loglevel')
+const { performance } = require('perf_hooks')
 
 const logger = log.getLogger('conseiljs')
 logger.setLevel('error', false)
@@ -136,10 +137,70 @@ const getArtisticOutputForAddress = async (address) => {
     return objectInfo
 }
 
-const getArtisticUniverse = async () => {
-    
-    
-    // Pair 4328 { Elt "" 0x697066733a2f2f516d62524d42525641477655423961505a686732446941785867717756414b4468786b6a383170416268774e6972 }
+const getArtisticUniverse = async (offset) => {
+    var t0 = performance.now()
+
+    let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 7000)
+
+    const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+        { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+        'mainnet',
+        'operations',
+        mintOperationQuery);
+
+    const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
+
+    var t1 = performance.now()
+    console.log(`${operationGroupIds.length} ids in ${(t1 - t0)}ms`)
+
+    var t2 = performance.now()
+    let royaltiesQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    royaltiesQuery = conseiljs.ConseilQueryBuilder.addFields(royaltiesQuery, 'key', 'value');
+    royaltiesQuery = conseiljs.ConseilQueryBuilder.addPredicate(royaltiesQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftRoyaltiesMap])
+    royaltiesQuery = conseiljs.ConseilQueryBuilder.setLimit(royaltiesQuery, 10_000)
+    const royaltiesResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', royaltiesQuery)
+    let artistMap = {}
+    royaltiesResult.forEach(row => {
+        artistMap[row['key']] = conseiljs.TezosMessageUtils.readAddress(row['value'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1'))
+    })
+    var t3 = performance.now()
+    console.log(`${royaltiesResult.length} royalties in ${(t3 - t2)}ms`)
+
+    var t4 = performance.now()
+    const queryChunks = chunkArray(operationGroupIds, 50)
+
+    const makeObjectQuery = (opIds) => {
+        let objectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+        objectsQuery = conseiljs.ConseilQueryBuilder.addFields(objectsQuery, 'key', 'value', 'operation_group_id');
+        objectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(objectsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftMetadataMap])
+        objectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(objectsQuery, 'operation_group_id', (opIds.length > 1 ? conseiljs.ConseilOperator.IN : conseiljs.ConseilOperator.EQ), opIds)
+        objectsQuery = conseiljs.ConseilQueryBuilder.setLimit(objectsQuery, opIds.length)
+
+        return objectsQuery
+    }
+
+    const objectQueries = queryChunks.map(c => makeObjectQuery(c))
+
+    let universe = []
+    await Promise.all(objectQueries.map(async (q) => await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', q)
+        .then(result => result.map(row => {
+            const objectId = row['value'].toString().replace(/^Pair ([0-9]{1,}) .*/, '$1')
+            const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
+            const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
+
+            universe.push({ objectId, ipfsHash, minter: artistMap[objectId] })
+    }))))
+    var t5 = performance.now()
+    console.log(`${universe.length} items in ${(t5 - t4)}ms with ${objectQueries.length} queries`)
+
+    return universe
 }
 
 /**
@@ -204,5 +265,6 @@ module.exports = {
     getCollectionForAddress,
     gethDaoBalanceForAddress,
     getArtisticOutputForAddress,
-    getObjectById
+    getObjectById,
+    getArtisticUniverse
 }

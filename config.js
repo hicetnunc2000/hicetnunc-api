@@ -8,7 +8,7 @@ const mainnet = {
     nftMetadataMap: 514,
     nftSwapMap: 523,
     curationsPtr: 519,
-    royaltiesPtr: 522,
+    nftRoyaltiesMap: 522,
     daoLedger: 515
 }
 
