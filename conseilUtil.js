@@ -210,7 +210,7 @@ const getArtisticUniverse = async (offset) => {
             const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
             const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
 
-            universe.push({ objectId, ipfsHash, minter: artistMap[objectId], swaps: swapMap[objectId] })
+            universe.push({ objectId, ipfsHash, minter: artistMap[objectId], swaps: swapMap[objectId] !== undefined ? swapMap[objectId] : []})
     }))))
 
     return universe
