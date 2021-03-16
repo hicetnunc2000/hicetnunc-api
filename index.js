@@ -267,6 +267,10 @@ app.use(cors({ origin: '*' }))
 app.get('/feed', async (req, res) => {
     var counter = req.query.counter
     var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
+    const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
+    if (max_time != null & max_time > now_time_qt) {
+        max_time = null
+    }
     await getFeed(counter, max_time, res)
 })
 
