@@ -132,7 +132,7 @@ const getCollectionForAddress = async (address) => {
             ...i
     }})
 
-    return collection.sort((a, b) => parseInt(b.piece) - parseInt(a.piece)) // sort descending by id – most-recently minted art first
+    return collection.sort((a, b) => b.receivedOn.getTime() - a.receivedOn.getTime()) // sort descending by date – most-recently acquired art first
 }
 
 const gethDaoBalanceForAddress = async (address) => {
