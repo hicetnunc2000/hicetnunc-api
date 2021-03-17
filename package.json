@@ -18,6 +18,7 @@
   "homepage": "https://github.com/hicetnunc2000/hicetnunc#readme",
   "dependencies": {
     "axios": "^0.21.1",
+    "bignumber.js": "9.0.1",
     "conseiljs": "5.0.7-2",
     "cors": "^2.8.5",
     "express": "^4.17.1",

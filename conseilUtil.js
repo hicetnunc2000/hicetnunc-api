@@ -1,6 +1,7 @@
 const conseiljs = require('conseiljs')
 const fetch = require('node-fetch')
 const log = require('loglevel')
+const BigNumber = require('bignumber.js')
 
 const logger = log.getLogger('conseiljs')
 logger.setLevel('error', false)
@@ -20,7 +21,7 @@ const mainnet = require('./config').networkConfig
  */
 const getCollectionForAddress = async (address) => {
     let collectionQuery = conseiljs.ConseilQueryBuilder.blankQuery();
-    collectionQuery = conseiljs.ConseilQueryBuilder.addFields(collectionQuery, 'key', 'value');
+    collectionQuery = conseiljs.ConseilQueryBuilder.addFields(collectionQuery, 'key', 'value', 'operation_group_id');
     collectionQuery = conseiljs.ConseilQueryBuilder.addPredicate(collectionQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftLedger])
     collectionQuery = conseiljs.ConseilQueryBuilder.addPredicate(collectionQuery, 'key', conseiljs.ConseilOperator.STARTSWITH, [
         `Pair 0x${conseiljs.TezosMessageUtils.writeAddress(address)}`,
@@ -30,10 +31,14 @@ const getCollectionForAddress = async (address) => {
 
     const collectionResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', collectionQuery);
     let collection = collectionResult.map((i) => {
-        return { piece: i.key.toString().replace(/.* ([0-9]{1,}$)/, '$1'), amount: Number(i.value) }
+        return {
+            piece: i['key'].toString().replace(/.* ([0-9]{1,}$)/, '$1'),
+            amount: Number(i['value']),
+            opId: i['operation_group_id']
+        }
     })
 
-    const queryChunks = chunkArray(collection.map(i => i.piece), 20) // NOTE: consider increasing this number somewhat
+    const queryChunks = chunkArray(collection.map(i => i.piece), 50) // NOTE: consider increasing this number somewhat
     const makeObjectQuery = (keys) => {
         let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addFields(mintedObjectsQuery, 'key_hash', 'value');
@@ -55,17 +60,84 @@ const getCollectionForAddress = async (address) => {
             objectIpfsMap[objectId] = ipfsHash
     }))))
 
-    collection = collection.map(i => { return {
-        ipfsHash: objectIpfsMap[i.piece.toString()],
-        ...i
+    const operationGroupIds = collectionResult.map((r) => r.operation_group_id)
+    const priceQueryChunks = chunkArray(operationGroupIds, 30)
+    const makeLastPriceQuery = (opIds) => {
+        let lastPriceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+        lastPriceQuery = conseiljs.ConseilQueryBuilder.addFields(lastPriceQuery, 'timestamp', 'amount', 'operation_group_hash', 'parameters_entrypoints', 'parameters');
+        lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(lastPriceQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction']);
+        lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(lastPriceQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied']);
+        lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(lastPriceQuery, 'internal', conseiljs.ConseilOperator.EQ, ['false']);
+        lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(lastPriceQuery, 'operation_group_hash', opIds.length > 1 ? conseiljs.ConseilOperator.IN : conseiljs.ConseilOperator.EQ, opIds);
+        lastPriceQuery = conseiljs.ConseilQueryBuilder.setLimit(lastPriceQuery, opIds.length);
+
+        return lastPriceQuery;
+    }
+
+    const priceQueries = priceQueryChunks.map((c) => makeLastPriceQuery(c))
+    const priceMap = {};
+    await Promise.all(
+        priceQueries.map(
+            async (q) =>
+                await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'operations', q).then((result) =>
+                    result.map((row) => {
+                        let amount = 0;
+                        const action = row.parameters_entrypoints;
+
+                        if (action === 'collect') {
+                            amount = Number(row.parameters.toString().replace(/^Pair ([0-9]+) [0-9]+/, '$1'));
+                        } else if (action === 'transfer') {
+                            amount = Number(
+                                row.parameters
+                                    .toString()
+                                    .replace(
+                                        /[{] Pair \"[1-9A-HJ-NP-Za-km-z]{36}\" [{] Pair \"[1-9A-HJ-NP-Za-km-z]{36}\" [(]Pair [0-9]+ [0-9]+[)] [}] [}]/,
+                                        '$1'
+                                    )
+                            );
+                        }
+
+                        priceMap[row.operation_group_hash] = {
+                            price: new BigNumber(row.amount),
+                            amount,
+                            timestamp: row.timestamp,
+                            action,
+                        };
+                    })
+                )
+        )
+    )
+
+    collection = collection.map(i => {
+        let price = 0
+        let receivedOn = new Date()
+        let action = ''
+
+        try {
+            const priceRecord = priceMap[i.opId]
+            price = priceRecord.price.dividedToIntegerBy(priceRecord.amount).toNumber()
+            receivedOn = new Date(priceRecord.timestamp)
+            action = priceRecord.action === 'collect' ? 'Purchased' : 'Received'
+        } catch {
+            //
+        }
+
+        delete i.opId
+
+        return {
+            price: isNaN(price) ? 0 : price,
+            receivedOn,
+            action,
+            ipfsHash: objectIpfsMap[i.piece.toString()],
+            ...i
     }})
 
     return collection.sort((a, b) => parseInt(b.piece) - parseInt(a.piece)) // sort descending by id – most-recently minted art first
 }
 
 const gethDaoBalanceForAddress = async (address) => {
-    let hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
-    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(hDaoBalanceQuery, 'value');
+    let hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(hDaoBalanceQuery, 'value')
     hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.daoLedger])
     hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'key', conseiljs.ConseilOperator.EQ, [
         `Pair 0x${conseiljs.TezosMessageUtils.writeAddress(address)} 0`
@@ -76,7 +148,7 @@ const gethDaoBalanceForAddress = async (address) => {
     let balance = 0
 
     try {
-        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', hDaoBalanceQuery);
+        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', hDaoBalanceQuery)
         balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
     } catch (error) {
         console.log(`gethDaoBalanceForAddress failed for ${JSON.stringify(hDaoBalanceQuery)} with ${error}`)
@@ -92,8 +164,8 @@ const gethDaoBalanceForAddress = async (address) => {
  * @returns 
  */
 const getArtisticOutputForAddress = async (address) => {
-    let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
+    let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash')
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
@@ -107,14 +179,14 @@ const getArtisticOutputForAddress = async (address) => {
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
         'mainnet',
         'operations',
-        mintOperationQuery);
+        mintOperationQuery)
 
     const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
     const queryChunks = chunkArray(operationGroupIds, 30)
 
     const makeObjectQuery = (opIds) => {
-        let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
-        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addFields(mintedObjectsQuery, 'key_hash', 'value');
+        let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addFields(mintedObjectsQuery, 'key_hash', 'value')
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintedObjectsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftMetadataMap])
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintedObjectsQuery, 'operation_group_id', (opIds.length > 1 ? conseiljs.ConseilOperator.IN : conseiljs.ConseilOperator.EQ), opIds)
         mintedObjectsQuery = conseiljs.ConseilQueryBuilder.setLimit(mintedObjectsQuery, opIds.length)
@@ -222,7 +294,6 @@ const getArtisticUniverse = async (offset) => {
  * @param {number} objectId 
  * @returns 
  */
-
 const getObjectById = async (objectId) => {
     let objectQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     objectQuery = conseiljs.ConseilQueryBuilder.addFields(objectQuery, 'value');
