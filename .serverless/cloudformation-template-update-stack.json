@@ -146,7 +146,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/hicetnunc-apiv2/dev/1615880662823-2021-03-16T07:44:22.823Z/hicetnunc-apiv2.zip"
+          "S3Key": "serverless/hicetnunc-apiv2/dev/1616044842570-2021-03-18T05:20:42.570Z/hicetnunc-apiv2.zip"
         },
         "FunctionName": "hicetnunc-apiv2-dev-handler",
         "Handler": "index.handler",
@@ -164,14 +164,14 @@
         "HandlerLogGroup"
       ]
     },
-    "HandlerLambdaVersion9JxeJVymMLadKim0CA2xts3Sq7MjDv9hgb8Kjy21D9E": {
+    "HandlerLambdaVersionBQ36OgfBcIfPgSb706UIr9lOrJOtZ0Z0CUitLzdpqA": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "HandlerLambdaFunction"
         },
-        "CodeSha256": "A5PEtCLwbB+fMx1VYq50HcNNaaGwfrVhq2LCEwgYZbk="
+        "CodeSha256": "XzPgs+74v32jD1VtT3EQIuiguzI/+h1FI5G32MCoFNc="
       }
     },
     "ApiGatewayRestApi": {
@@ -383,7 +383,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1615880658144": {
+    "ApiGatewayDeployment1616044838303": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -445,7 +445,7 @@
     "HandlerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "HandlerLambdaVersion9JxeJVymMLadKim0CA2xts3Sq7MjDv9hgb8Kjy21D9E"
+        "Ref": "HandlerLambdaVersionBQ36OgfBcIfPgSb706UIr9lOrJOtZ0Z0CUitLzdpqA"
       }
     },
     "ServiceEndpoint": {
