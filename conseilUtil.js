@@ -110,7 +110,7 @@ const getArtisticOutputForAddress = async (address) => {
         mintOperationQuery);
 
     const operationGroupIds = mintOperationResult.map(r => r['operation_group_hash'])
-    const queryChunks = chunkArray(operationGroupIds, 10)
+    const queryChunks = chunkArray(operationGroupIds, 30)
 
     const makeObjectQuery = (opIds) => {
         let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
@@ -133,7 +133,7 @@ const getArtisticOutputForAddress = async (address) => {
             return { key: row['key_hash'], objectId, ipfsHash }
     }))))
 
-    return objectInfo
+    return objectInfo.flat(1).sort((a, b) => parseInt(b.objectId) - parseInt(a.objectId))
 }
 
 const getArtisticUniverse = async (max_time) => {

@@ -159,7 +159,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/hicetnunc-apiv2/dev/1615880662823-2021-03-16T07:44:22.823Z/hicetnunc-apiv2.zip"
+                "S3Key": "serverless/hicetnunc-apiv2/dev/1616044842570-2021-03-18T05:20:42.570Z/hicetnunc-apiv2.zip"
               },
               "FunctionName": "hicetnunc-apiv2-dev-handler",
               "Handler": "index.handler",
@@ -177,14 +177,14 @@
               "HandlerLogGroup"
             ]
           },
-          "HandlerLambdaVersion9JxeJVymMLadKim0CA2xts3Sq7MjDv9hgb8Kjy21D9E": {
+          "HandlerLambdaVersionBQ36OgfBcIfPgSb706UIr9lOrJOtZ0Z0CUitLzdpqA": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HandlerLambdaFunction"
               },
-              "CodeSha256": "A5PEtCLwbB+fMx1VYq50HcNNaaGwfrVhq2LCEwgYZbk="
+              "CodeSha256": "XzPgs+74v32jD1VtT3EQIuiguzI/+h1FI5G32MCoFNc="
             }
           },
           "ApiGatewayRestApi": {
@@ -396,7 +396,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1615880658144": {
+          "ApiGatewayDeployment1616044838303": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -458,7 +458,7 @@
           "HandlerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HandlerLambdaVersion9JxeJVymMLadKim0CA2xts3Sq7MjDv9hgb8Kjy21D9E"
+              "Ref": "HandlerLambdaVersionBQ36OgfBcIfPgSb706UIr9lOrJOtZ0Z0CUitLzdpqA"
             }
           },
           "ServiceEndpoint": {
@@ -616,7 +616,7 @@
         "memory": 1024,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "HandlerLambdaVersion9JxeJVymMLadKim0CA2xts3Sq7MjDv9hgb8Kjy21D9E"
+        "versionLogicalId": "HandlerLambdaVersionBQ36OgfBcIfPgSb706UIr9lOrJOtZ0Z0CUitLzdpqA"
       }
     },
     "configValidationMode": "warn",
@@ -1010,6 +1010,45 @@
           "node_modules/big-integer/package.json",
           "node_modules/big-integer/README.md",
           "node_modules/big-integer/tsconfig.json",
+          "node_modules/dotenv/CHANGELOG.md",
+          "node_modules/dotenv/config.js",
+          "node_modules/dotenv/lib/cli-options.js",
+          "node_modules/dotenv/lib/env-options.js",
+          "node_modules/dotenv/lib/main.js",
+          "node_modules/dotenv/LICENSE",
+          "node_modules/dotenv/package.json",
+          "node_modules/dotenv/README.md",
+          "node_modules/dotenv/types/index.d.ts",
+          "node_modules/dotenv/types/test.ts",
+          "node_modules/dotenv/types/tsconfig.json",
+          "node_modules/dotenv/types/tslint.json",
+          "node_modules/cloud-local-storage/lib/commands/create.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/create.js",
+          "node_modules/cloud-local-storage/lib/commands/get-all-keys.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/get-all-keys.js",
+          "node_modules/cloud-local-storage/lib/commands/get-item.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/get-item.js",
+          "node_modules/cloud-local-storage/lib/commands/init.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/init.js",
+          "node_modules/cloud-local-storage/lib/commands/list.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/list.js",
+          "node_modules/cloud-local-storage/lib/commands/reset-password.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/reset-password.js",
+          "node_modules/cloud-local-storage/lib/commands/set-item.d.ts",
+          "node_modules/cloud-local-storage/lib/commands/set-item.js",
+          "node_modules/cloud-local-storage/lib/index.d.ts",
+          "node_modules/cloud-local-storage/lib/index.js",
+          "node_modules/cloud-local-storage/lib/utils/consts.d.ts",
+          "node_modules/cloud-local-storage/lib/utils/consts.js",
+          "node_modules/cloud-local-storage/package.json",
+          "node_modules/cloud-local-storage/readme.md",
+          "node_modules/cloud-local-storage/src/commands/create.ts",
+          "node_modules/cloud-local-storage/src/commands/get-all-keys.ts",
+          "node_modules/cloud-local-storage/src/commands/get-item.ts",
+          "node_modules/cloud-local-storage/src/commands/set-item.ts",
+          "node_modules/cloud-local-storage/src/index.ts",
+          "node_modules/cloud-local-storage/src/utils/consts.ts",
+          "node_modules/cloud-local-storage/tsconfig.json",
           "node_modules/lodash/_apply.js",
           "node_modules/lodash/_arrayAggregator.js",
           "node_modules/lodash/_arrayEach.js",
@@ -2507,7 +2546,7 @@
           "node_modules/@types/aws-lambda/trigger/sqs.d.ts"
         ],
         "artifact": "/home/crzy/Desktop/programs/lambdas-aws/api-final/new2/hicetnunc-api/.serverless/hicetnunc-apiv2.zip",
-        "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1615880662823-2021-03-16T07:44:22.823Z"
+        "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1616044842570-2021-03-18T05:20:42.570Z"
       },
       "plugins": {
         "$ref": "$[\"service\"][\"plugins\"]"
@@ -2524,7 +2563,7 @@
     "artifact": "/home/crzy/Desktop/programs/lambdas-aws/api-final/new2/hicetnunc-api/.serverless/hicetnunc-apiv2.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1615880662823-2021-03-16T07:44:22.823Z",
+    "artifactDirectoryName": "serverless/hicetnunc-apiv2/dev/1616044842570-2021-03-18T05:20:42.570Z",
     "artifact": "hicetnunc-apiv2.zip"
   }
 }

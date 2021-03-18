@@ -3,8 +3,9 @@ const axios = require('axios')
 const express = require('express')
 const cors = require('cors')
 const _ = require('lodash')
-
 const conseilUtil = require('./conseilUtil')
+const cls = require('cloud-local-storage')
+require('dotenv').config()
 
 const reducer = (accumulator, currentValue) => accumulator + currentValue;
 
@@ -34,10 +35,10 @@ const getTokenHoldersArr = async (arr) => {
     return await arr.map(async e => await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data))
     /*     await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + arr[0]).then(res => console.log(res.data))
      *//*     var result = arr.map(async e => {
-          return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
-      })
-  
-      console.log(result) */
+      return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
+  })
+ 
+  console.log(result) */
 }
 
 const owners = async (obj) => {
@@ -135,10 +136,13 @@ const ONE_MINUTE_MILLIS = 60 * 1000
 
 
 const getFeed = async (counter, max_time, res) => {
+  
     const now_time = Date.now()
     const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
     max_time = (typeof max_time !== 'undefined') ?  max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
+
     var arr = await conseilUtil.getArtisticUniverse(max_time)
+
     var feed = offset(desc(arr), counter)
     console.log(feed)
     feed = await feed.map(async e => {
@@ -160,7 +164,8 @@ const getFeed = async (counter, max_time, res) => {
         var aux_arr = results.map(e => e)
         
         res.set('Cache-Control', `public, max-age=${cache_time}`)
-        //console.log(aux_arr)
+        
+        console.log(aux_arr)
         res.json({ result: aux_arr })
     })
 }
@@ -180,16 +185,19 @@ const getTzLedger = async (tz, res) => {
     console.log(hdao)
 
     var arr = []
-
-    var arr = _.union(collection, creations[0])
+    console.log([...collection, ...creations])
+    var arr = [...collection, ...creations]
 
     var result = arr.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
+
         if (e.piece != undefined) {
             e.token_id = parseInt(e.piece)
         } else {
             e.token_id = parseInt(e.objectId)
+
         }
+        console.log(e)
         return e
     })
 
@@ -201,7 +209,7 @@ const getTzLedger = async (tz, res) => {
             result: _.uniqBy(result, (e) => {
                 return e.token_id
             }),
-            hdao : hdao
+            hdao: hdao
         })
     })
 
@@ -281,7 +289,13 @@ app.post('/tz', async (req, res) => {
 })
 
 app.post('/objkt', async (req, res) => {
-    res.json({ result: await getObjktById(req.body.objkt_id) })
+    var list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
+
+    list.includes(parseInt(req.body.objkt_id))
+        ?
+        res.json({ result: [] })
+        :
+        res.json({ result: await getObjktById(req.body.objkt_id) })
 })
 
 app.post('/hdao', async (req, res) => {
@@ -289,8 +303,12 @@ app.post('/hdao', async (req, res) => {
 })
 
 app.listen(3001)
-module.exports.handler = serverless(app)
+//module.exports.handler = serverless(app)
 
+/* const test2 = async () => {
+    await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => console.log(res.data))
+}
+test2() */
 //testTkHolder([{'kt' : 2020}, {'kt' : 2021}])
 //getFeed(1)
 //getObjktById(2000)
