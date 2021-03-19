@@ -141,7 +141,6 @@ const getArtisticUniverse = async (max_time) => {
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.BEFORE, [max_time]) // quantized time (1min)
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
@@ -205,14 +204,21 @@ const getArtisticUniverse = async (max_time) => {
     const objectQueries = queryChunks.map(c => makeObjectQuery(c))
 
     let universe = []
-    await Promise.all(objectQueries.map(async (q) => await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', q)
-        .then(result => result.map(row => {
-            const objectId = row['value'].toString().replace(/^Pair ([0-9]{1,}) .*/, '$1')
-            const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
-            const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
+    await Promise.all(
+        objectQueries.map(async (q) =>  {
+            const r = []
+            try {
+                r = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', q)
+                    .then(result => result.map(row => {
+                        const objectId = row['value'].toString().replace(/^Pair ([0-9]{1,}) .*/, '$1')
+                        const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
+                        const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
 
-            universe.push({ objectId, ipfsHash, minter: artistMap[objectId], swaps: swapMap[objectId] !== undefined ? swapMap[objectId] : []})
-    }))))
+                    universe.push({ objectId, ipfsHash, minter: artistMap[objectId], swaps: swapMap[objectId] !== undefined ? swapMap[objectId] : []})
+                    })) // NOTE: it's a work in progress, this will drop failed requests and return a smaller set than expected
+            } finally {
+                return r
+            }}))
 
     return universe
 }

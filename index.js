@@ -135,13 +135,13 @@ const customFloor = function (value, roundTo) {
 const ONE_MINUTE_MILLIS = 60 * 1000
 
 
-const getFeed = async (counter, max_time, res) => {
+const getFeed = async (counter, res) => {
 
-    const now_time = Date.now()
+/*     const now_time = Date.now()
     const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
     max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
-
-    var arr = await conseilUtil.getArtisticUniverse(max_time)
+ */
+    var arr = await conseilUtil.getArtisticUniverse(0)
 
     var feed = offset(desc(arr), counter)
     console.log(feed)
@@ -152,18 +152,18 @@ const getFeed = async (counter, max_time, res) => {
         return e
     })
     //console.log(feed)
-    var cache_time
+ /*    var cache_time
     if (immutable) {
         cache_time = 60 * 10
     }
     else {
         cache_time = (int)(((max_time + ONE_MINUTE_MILLIS) - now_time) / 1000)
-    }
+    } */
     var promise = Promise.all(feed.map(e => e))
     promise.then(async (results) => {
         var aux_arr = results.map(e => e)
 
-        res.set('Cache-Control', `public, max-age=${cache_time}`)
+        //res.set('Cache-Control', `public, max-age=${cache_time}`)
 
         console.log(aux_arr)
         res.json({ result: aux_arr })
@@ -272,14 +272,14 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
-app.get('/feed', async (req, res) => {
-    var counter = req.query.counter
+app.post('/feed', async (req, res) => {
+/*     var counter = req.query.counter
     var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
     const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
     if (max_time != null & max_time > now_time_qt) {
         max_time = null
-    }
-    await getFeed(counter, max_time, res)
+    } */
+    await getFeed(req.body.counter, res)
 })
 
 app.post('/tz', async (req, res) => {
@@ -308,8 +308,8 @@ app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
 
-app.listen(3001)
-//module.exports.handler = serverless(app)
+//app.listen(3001)
+module.exports.handler = serverless(app)
 
 /* const test2 = async () => {
     await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => console.log(res.data))
