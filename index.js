@@ -35,10 +35,10 @@ const getTokenHoldersArr = async (arr) => {
     return await arr.map(async e => await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data))
     /*     await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + arr[0]).then(res => console.log(res.data))
      *//*     var result = arr.map(async e => {
-      return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
-  })
+     return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
+ })
  
-  console.log(result) */
+ console.log(result) */
 }
 
 const owners = async (obj) => {
@@ -128,7 +128,7 @@ const filterTz = (data, tz) => _.filter(data, { tz: tz })
 
 const test = async () => console.log(desc(await getObjkts()))
 
-const customFloor = function(value, roundTo) {
+const customFloor = function (value, roundTo) {
     return Math.floor(value / roundTo) * roundTo;
 }
 
@@ -136,10 +136,10 @@ const ONE_MINUTE_MILLIS = 60 * 1000
 
 
 const getFeed = async (counter, max_time, res) => {
-  
+
     const now_time = Date.now()
     const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
-    max_time = (typeof max_time !== 'undefined') ?  max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
+    max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
 
     var arr = await conseilUtil.getArtisticUniverse(max_time)
 
@@ -154,7 +154,7 @@ const getFeed = async (counter, max_time, res) => {
     //console.log(feed)
     var cache_time
     if (immutable) {
-        cache_time = 60*10
+        cache_time = 60 * 10
     }
     else {
         cache_time = (int)(((max_time + ONE_MINUTE_MILLIS) - now_time) / 1000)
@@ -162,9 +162,9 @@ const getFeed = async (counter, max_time, res) => {
     var promise = Promise.all(feed.map(e => e))
     promise.then(async (results) => {
         var aux_arr = results.map(e => e)
-        
+
         res.set('Cache-Control', `public, max-age=${cache_time}`)
-        
+
         console.log(aux_arr)
         res.json({ result: aux_arr })
     })
@@ -284,7 +284,13 @@ app.get('/feed', async (req, res) => {
 
 app.post('/tz', async (req, res) => {
     console.log(req.body.tz)
-    await getTzLedger(req.body.tz, res)
+    var list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
+
+    list.includes(req.body.tz)
+        ?
+        res.json({ result: [] })
+        :
+        await getTzLedger(req.body.tz, res)
 
 })
 
