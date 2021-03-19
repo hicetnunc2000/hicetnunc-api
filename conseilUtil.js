@@ -212,12 +212,11 @@ const getArtisticUniverse = async (max_time) => {
     let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.BEFORE, [max_time]) // quantized time (1min)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.BETWEEN, [1612240919000, max_time]) // after 2021 Feb 1
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 7000)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 20_000)
 
     const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -230,7 +229,7 @@ const getArtisticUniverse = async (max_time) => {
     let royaltiesQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     royaltiesQuery = conseiljs.ConseilQueryBuilder.addFields(royaltiesQuery, 'key', 'value');
     royaltiesQuery = conseiljs.ConseilQueryBuilder.addPredicate(royaltiesQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftRoyaltiesMap])
-    royaltiesQuery = conseiljs.ConseilQueryBuilder.setLimit(royaltiesQuery, 10_000)
+    royaltiesQuery = conseiljs.ConseilQueryBuilder.setLimit(royaltiesQuery, 20_000)
     const royaltiesResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', royaltiesQuery)
     let artistMap = {}
     royaltiesResult.forEach(row => {
@@ -238,9 +237,9 @@ const getArtisticUniverse = async (max_time) => {
     })
 
     let swapsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
-    swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value');
+    swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value')
     swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftSwapMap])
-    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 10_000) // NOTE, limited to 10_000
+    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 20_000)
 
     const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', swapsQuery)
 
