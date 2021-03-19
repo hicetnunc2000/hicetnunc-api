@@ -9,7 +9,7 @@ package:
 
 plugins:
   - serverless-plugin-include-dependencies
-
+  - serverless-dotenv-plugin
 provider:
   name: aws
   runtime: nodejs12.x
