@@ -44,7 +44,7 @@ const owners = async (obj) => {
     var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
     var values_arr = (_.values(owners))
     console.log(owners)
-    obj.total_amount = values_arr.filter(e => parseInt(e) >= 0).reduce(reducer)
+    obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ?(values_arr.map(e => parseInt(e))) : 0
     obj.owners = owners
     console.log(obj)
     //obj.total_amount = (values_arr.map(e => parseInt(e))).reduce(reducer)
@@ -55,7 +55,8 @@ const totalAmountIntegral = async (obj) => {
     var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
     console.log(owners)
     var values_arr = (_.values(owners))
-    obj.total_amount = (values_arr.map(e => parseInt(e))).reduce(reducer)
+    obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ?(values_arr.map(e => parseInt(e))) : 0
+    
     obj.owners = owners
     return obj
 }
