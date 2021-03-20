@@ -2,6 +2,8 @@ const conseiljs = require('conseiljs')
 const fetch = require('node-fetch')
 const log = require('loglevel')
 const BigNumber = require('bignumber.js')
+const pThrottle = require('p-throttle')
+// const { performance } = require('perf_hooks'); // NOTE: disabled for prod
 
 const logger = log.getLogger('conseiljs')
 logger.setLevel('error', false)
@@ -10,6 +12,8 @@ conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
 const tezosNode = ''
+
+const throttleConseil = pThrottle({ limit: 15, interval: 1200 })
 
 const mainnet = require('./config').networkConfig
 
@@ -275,12 +279,13 @@ const getArtisticUniverse = async (max_time) => {
 
     const objectQueries = queryChunks.map(c => makeObjectQuery(c))
 
+    // const a = performance.now()
     let universe = []
     await Promise.all(
         objectQueries.map(async (q) =>  {
-            const r = []
+            let r = []
             try {
-                r = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', q)
+                r = await throttleConseilQuery('big_map_contents', q)
                     .then(result => result.map(row => {
                         const objectId = row['value'].toString().replace(/^Pair ([0-9]{1,}) .*/, '$1')
                         const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
@@ -288,9 +293,14 @@ const getArtisticUniverse = async (max_time) => {
 
                     universe.push({ objectId, ipfsHash, minter: artistMap[objectId], swaps: swapMap[objectId] !== undefined ? swapMap[objectId] : []})
                     })) // NOTE: it's a work in progress, this will drop failed requests and return a smaller set than expected
+            } catch (error) {
+                console.log('failed at query', q, 'with error', error)
             } finally {
                 return r
             }}))
+
+    // const b = performance.now()
+    // console.log(`time ${b - a}`)
 
     return universe
 }
@@ -352,6 +362,12 @@ const chunkArray = (arr, len) => { // TODO: move to util.js
 
     return chunks;
 }
+
+const throttleConseilQuery = throttleConseil(async (table, query) => {
+    const result = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', table, query)
+
+    return Promise.resolve(result)
+})
 
 module.exports = {
     getCollectionForAddress,
