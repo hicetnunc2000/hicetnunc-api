@@ -24,7 +24,6 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "fetch": "^1.1.0",
     "lodash": "^4.17.21",
     "loglevel": "1.7.1",
     "node-fetch": "2.6.1",
