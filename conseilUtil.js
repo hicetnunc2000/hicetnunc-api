@@ -351,6 +351,25 @@ const getObjectById = async (objectId) => {
     return { objectId, ipfsHash, swaps }
 }
 
+const getObjectOwnersById = async (objectId) => {
+    let objectQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    objectQuery = conseiljs.ConseilQueryBuilder.addFields(objectQuery, 'key', 'value');
+    objectQuery = conseiljs.ConseilQueryBuilder.addPredicate(objectQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftLedger])
+    objectQuery = conseiljs.ConseilQueryBuilder.addPredicate(objectQuery, 'key', conseiljs.ConseilOperator.ENDSWITH, [` ${objectId}`])
+    objectQuery = conseiljs.ConseilQueryBuilder.setLimit(objectQuery, 20_000)
+
+    const objectResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', objectQuery)
+
+    const ownerMap = objectResult.map(r => {
+        const address = conseiljs.TezosMessageUtils.readAddress(r['key'].replace(/Pair 0x([0-9a-z]{1,}) [0-9]+$/, '$1'))
+        const amount = parseInt(r['value'])
+
+        return { address, amount }
+    })
+
+    return ownerMap
+}
+
 const chunkArray = (arr, len) => { // TODO: move to util.js
     let chunks = [],
         i = 0,
@@ -374,5 +393,6 @@ module.exports = {
     gethDaoBalanceForAddress,
     getArtisticOutputForAddress,
     getObjectById,
-    getArtisticUniverse
+    getObjectOwnersById,
+    getArtisticUniverse,
 }
