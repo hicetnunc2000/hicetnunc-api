@@ -4,6 +4,7 @@ const express = require('express')
 const cors = require('cors')
 const _ = require('lodash')
 const conseilUtil = require('./conseilUtil')
+const { random } = require('lodash')
 require('dotenv').config()
 
 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue)
@@ -34,7 +35,7 @@ const getTokenHoldersArr = async (arr) => {
     return await arr.map(async e => await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data))
     /*     await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + arr[0]).then(res => console.log(res.data))
      *//*     var result = arr.map(async e => {
-   return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
+return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
 })
  
 console.log(result) */
@@ -54,8 +55,8 @@ const totalAmountIntegral = async (obj) => {
     var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
     console.log(owners)
     var values_arr = (_.values(owners))
-    obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ?(values_arr.filter(e => parseInt(e))) : 0
-    
+    obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? (values_arr.filter(e => parseInt(e))) : 0
+
     obj.owners = owners
     return obj
 }
@@ -71,7 +72,7 @@ const objktOwners = async (arr) => {
 
 
 const getObjktLedger = async () => await axios.get('https://better-call.dev/v1/bigmap/mainnet/511/keys?size=6500').then(res => res.data.map(e => ({ amount: parseInt(e.data.value.value), tz: e.data.key.children[0].value, tk_id: parseInt(e.data.key.children[1].value) })))
-const gethDAOLedger = async () => await axios.get('https://api.better-call.dev/v1/bigmap/mainnet/519/keys?size=4000').then(res => res.data.map(e => {
+const gethDAOLedger = async (counter) => await axios.get('https://api.better-call.dev/v1/bigmap/mainnet/519/keys?size=10&offset=' + counter * 10).then(res => res.data.map(e => {
     return { token_id: parseInt(e.data.key.value), hDAO_balance: parseInt(e.data.value.children[0].value) }
 }))
 
@@ -134,6 +135,23 @@ const customFloor = function (value, roundTo) {
 
 const ONE_MINUTE_MILLIS = 60 * 1000
 
+const randomFeed = async (counter, res) => {
+    var feed = await conseilUtil.getArtisticUniverse(0)
+    feed = offset(_.shuffle(feed), counter)
+    feed = await feed.map(async e => {
+        e.token_info = await getIpfsHash(e.ipfsHash)
+        e.token_id = parseInt(e.objectId)
+        console.log(e)
+        return e
+    })
+    var promise = Promise.all(feed.map(e => e))
+    promise.then(async (results) => {
+        var aux_arr = results.map(e => e)
+        //res.set('Cache-Control', `public, max-age=${cache_time}`)
+        console.log(aux_arr)
+        res.json({ result: aux_arr })
+    })
+}
 
 const getFeed = async (counter, res) => {
 
@@ -246,13 +264,16 @@ const mergehDAO = async (obj) => {
 }
 
 const hDAOFeed = async (counter, res) => {
-    var hDAO = await gethDAOLedger()
-    var arr = _.orderBy(hDAO, ['hDAO_balance'], ['desc'])
-    var objkts = await arr.map(async e => await mergehDAO(e))
+
+    var hDAO = await conseilUtil.hDAOFeed()
+    var set = _.orderBy(hDAO, ['hDAO_balance'], ['desc'])
+    var objkts = await (offset(set, 0)).map(async e => await mergehDAO(e))
+
     var promise = Promise.all(objkts.map(e => e))
     promise.then(results => {
         var result = results.map(e => e)
-        res.json({ result: offset(result, counter) })
+        console.log(result)
+        res.json({ result: result })
     }).catch(e => {
         res.status(500).json({ error: 'downstream API failure' })
     })
@@ -281,6 +302,10 @@ app.post('/feed', async (req, res) => {
         } 
     */
     await getFeed(req.body.counter, res)
+})
+
+app.post('/random', async (req, res) => {
+    await randomFeed(parseInt(req.body.counter), res)
 })
 
 app.post('/tz', async (req, res) => {
@@ -312,6 +337,9 @@ app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
 
-//app.listen(3001)
-module.exports.handler = serverless(app)
+const testhdao = async () =>  await hDAOFeed(parseInt(0))
+//testhdao()
+
+app.listen(3001)
+//module.exports.handler = serverless(app)
 
