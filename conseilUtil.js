@@ -13,6 +13,22 @@ const tezosNode = ''
 
 const mainnet = require('./config').networkConfig
 
+
+const hDAOFeed = async () => {
+
+    let hDAOQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    hDAOQuery = conseiljs.ConseilQueryBuilder.addFields(hDAOQuery, 'key', 'value');
+    hDAOQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDAOQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.curationsPtr])
+    hDAOQuery = conseiljs.ConseilQueryBuilder.setLimit(hDAOQuery, 10_000)
+
+    let hDAOResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', hDAOQuery);
+    return hDAOResult.map(e => { 
+        return {
+            token_id : parseInt(e.key), 
+            hDAO_balance : parseInt((e.value).split(' ')[1])
+        }
+    })
+}
 /**
  * Returns a list of nft token ids and amounts that a given address owns.
  * 
@@ -212,11 +228,11 @@ const getArtisticUniverse = async (max_time) => {
     let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.BETWEEN, [1612240919000, max_time]) // after 2021 Feb 1
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 20_000)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 30_000)
 
     const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -358,5 +374,6 @@ module.exports = {
     gethDaoBalanceForAddress,
     getArtisticOutputForAddress,
     getObjectById,
-    getArtisticUniverse
+    getArtisticUniverse,
+    hDAOFeed
 }

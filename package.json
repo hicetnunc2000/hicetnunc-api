@@ -8,19 +8,19 @@
     },
     "repository": {
       "type": "git",
-      "url": "git+https://github.com/hicetnunc2000/hicetnunc.git"
+      "url": "git+https://github.com/hicetnunc2000/hicetnunc-api.git"
     },
     "author": "@hicetnunc2000",
     "license": "MIT",
     "bugs": {
-      "url": "https://github.com/hicetnunc2000/hicetnunc/issues"
+      "url": "https://github.com/hicetnunc2000/hicetnunc-api/issues"
     },
-    "homepage": "https://github.com/hicetnunc2000/hicetnunc#readme",
+    "homepage": "https://github.com/hicetnunc2000/hicetnunc-api#readme",
     "dependencies": {
       "axios": "^0.21.1",
       "bignumber.js": "9.0.1",
       "cloud-local-storage": "0.0.11",
-      "conseiljs": "5.0.7-2",
+      "conseiljs": "5.0.8-1",
       "cors": "^2.8.5",
       "dotenv": "^8.2.0",
       "express": "^4.17.1",
