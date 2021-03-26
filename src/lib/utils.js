@@ -1,10 +1,10 @@
 'use strict'
 
-const FEED_ITEMS_PER_PAGE = process.env.FEED_ITEMS_PER_PAGE || 30
-
 const axios = require('axios')
 const conseil = require('conseil')
 const _ = require('lodash')
+
+const { feedItemsPerPage } = require('config')
 
 module.exports = {
   getIpfsHash,
@@ -44,26 +44,26 @@ async function getObjktOwners(objkt) {
   ).data
   const ownerCountList = _.values(owners)
 
-  let total = 0;
+  let total = 0
 
   if (ownerCountList.length) {
     total = ownerCountList.reduce((acc, i) => {
-        const owned = parseInt(i)
+      const owned = parseInt(i)
 
-        return owned > 0 ? acc + owned : acc
+      return owned > 0 ? acc + owned : acc
     }, 0)
   }
 
   return {
     total_amount: total,
-    owners
+    owners,
   }
 }
 
 function paginateFeed(feed, cursor) {
   return feed.slice(
-    cursor * FEED_ITEMS_PER_PAGE,
-    cursor * FEED_ITEMS_PER_PAGE + FEED_ITEMS_PER_PAGE
+    cursor * feedItemsPerPage,
+    cursor * feedItemsPerPage + feedItemsPerPage
   )
 }
 

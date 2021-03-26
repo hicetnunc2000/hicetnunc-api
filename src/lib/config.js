@@ -1,6 +1,7 @@
 'use strict'
 
 module.exports = {
+  feedItemsPerPage: process.env.FEED_ITEMS_PER_PAGE || 30,
   networkConfig: {
     network: 'mainnet',
     nftContract: 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton',
