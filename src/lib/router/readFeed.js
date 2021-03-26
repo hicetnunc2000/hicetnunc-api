@@ -15,8 +15,6 @@ module.exports = async function readFeed(req, res) {
         objkt.token_info = await getIpfsHash(objkt.ipfsHash)
         objkt.token_id = parseInt(objkt.objectId)
 
-        console.log(objkt)
-
         return objkt
       })
     ),
