@@ -42,14 +42,21 @@ async function getObjktOwners(objkt) {
         objkt.token_id
     )
   ).data
-  const ownerAddrs = _.values(owners)
+  const ownerCountList = _.values(owners)
+
+  let total = 0;
+
+  if (ownerCountList.length) {
+    total = ownerCountList.reduce((acc, i) => {
+        const owned = parseInt(i)
+
+        return owned > 0 ? acc + owned : acc
+    }, 0)
+  }
 
   return {
-    total_amount:
-      ownerAddrs.map((e) => parseInt(e)).length > 0
-        ? ownerAddrs.filter((e) => parseInt(e) > 0).reduce(paginateFeed)
-        : 0,
-    owners,
+    total_amount: total,
+    owners
   }
 }
 
