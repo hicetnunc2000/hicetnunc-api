@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js",
+    "start-dev": "NODE_ENV=development ./node_modules/.bin/nodemon src/index.js",
+    "pretty": "./node_modules/.bin/prettier --loglevel warn --write src"
   },
   "repository": {
     "type": "git",
@@ -31,5 +33,9 @@
   "engines": {
     "node": "12.20.1",
     "npm": "6.14.10"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7",
+    "prettier": "^2.2.1"
   }
 }

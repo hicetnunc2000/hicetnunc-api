@@ -1,4 +1,7 @@
-const mainnet = {
+'use strict'
+
+module.exports = {
+  networkConfig: {
     network: 'mainnet',
     nftContract: 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton',
     hDAOToken: 'KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW',
@@ -9,9 +12,6 @@ const mainnet = {
     nftSwapMap: 523,
     curationsPtr: 519,
     nftRoyaltiesMap: 522,
-    daoLedger: 515
-}
-
-module.exports = {
-    networkConfig: mainnet
+    daoLedger: 515,
+  },
 }
