@@ -5,7 +5,7 @@ const conseil = require('conseil')
 const _ = require('lodash')
 const { getIpfsHash } = require('utils')
 
-module.exports = async function readTezosLedger(req, res) {
+module.exports = async function readIssuer(req, res) {
   const list = (
     await axios.get(
       'https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json'

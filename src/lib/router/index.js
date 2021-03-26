@@ -3,13 +3,13 @@
 const router = require('express').Router()
 const readFeed = require('./readFeed')
 const readRandomFeed = require('./readRandomFeed')
-const readTezosLedger = require('./readTezosLedger')
+const readIssuer = require('./readIssuer')
 const readObjkt = require('./readObjkt')
 const readHdaoFeed = require('./readHdaoFeed')
 
 router.post('/feed', _asyncHandler(readFeed))
 router.post('/random', _asyncHandler(readRandomFeed))
-router.post('/tz', _asyncHandler(readTezosLedger))
+router.post('/tz', _asyncHandler(readIssuer))
 router.post('/objkt', _asyncHandler(readObjkt))
 router.post('/hdao', _asyncHandler(readHdaoFeed))
 
