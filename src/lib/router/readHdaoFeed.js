@@ -1,5 +1,6 @@
 'use strict'
 
+const _ = require('lodash')
 const conseil = require('conseil')
 
 const { getObjktById, paginateFeed } = require('utils')
