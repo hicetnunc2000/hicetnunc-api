@@ -159,6 +159,7 @@ const getFeed = async (counter, res) => {
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
      */
+    console.log('feed')
     var arr = await conseilUtil.getArtisticUniverse(0)
 
     var feed = offset(desc(arr), counter)
@@ -281,9 +282,9 @@ const hDAOFeed = async (counter, res) => {
 
 //getObjkts()
 //testSwaps()
-//getFeed(0)
+//getFeed(1)
 //getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
-//getObjktById(5965)
+//getObjktById(12004)
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
@@ -340,6 +341,6 @@ app.post('/hdao', async (req, res) => {
 const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-app.listen(3001)
-//module.exports.handler = serverless(app)
+//app.listen(3001)
+module.exports.handler = serverless(app)
 
