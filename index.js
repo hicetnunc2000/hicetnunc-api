@@ -284,7 +284,7 @@ const hDAOFeed = async (counter, res) => {
 //testSwaps()
 //getFeed(1)
 //getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
-getObjktById(15306)
+//getObjktById(15306)
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
@@ -342,5 +342,5 @@ const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
 //app.listen(3001)
-//module.exports.handler = serverless(app)
+module.exports.handler = serverless(app)
 
