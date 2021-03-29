@@ -268,7 +268,7 @@ const hDAOFeed = async (counter, res) => {
 
     var hDAO = await conseilUtil.hDAOFeed()
     var set = _.orderBy(hDAO, ['hDAO_balance'], ['desc'])
-    var objkts = await (offset(set, 0)).map(async e => await mergehDAO(e))
+    var objkts = await (offset(set, counter)).map(async e => await mergehDAO(e))
 
     var promise = Promise.all(objkts.map(e => e))
     promise.then(results => {
@@ -284,7 +284,7 @@ const hDAOFeed = async (counter, res) => {
 //testSwaps()
 //getFeed(1)
 //getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
-//getObjktById(12004)
+getObjktById(15306)
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
@@ -342,5 +342,5 @@ const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
 //app.listen(3001)
-module.exports.handler = serverless(app)
+//module.exports.handler = serverless(app)
 
