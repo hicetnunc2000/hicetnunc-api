@@ -9,7 +9,7 @@ conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
 const tezosNode = ''
-
+const quipuSwapContract = "KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph"
 const mainnet = require('./config').networkConfig
 
 
@@ -100,6 +100,37 @@ const gethDaoBalanceForAddress = async (address) => {
 
     return balance
 }
+
+
+const getTezBalanceForAddress = async (address) => {
+    let accountQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    accountQuery = conseiljs.ConseilQueryBuilder.addFields(accountQuery, 'balance');
+    accountQuery = conseiljs.ConseilQueryBuilder.addPredicate(accountQuery, 'account_id', conseiljs.ConseilOperator.EQ, [address], false);
+    accountQuery = conseiljs.ConseilQueryBuilder.setLimit(accountQuery, 1);
+
+    try {
+        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'accounts', accountQuery);
+        balance = balanceResult[0]['balance'] // TODO: consider bigNumber here, for the moment there is no reason for it
+    } catch (error) {
+        console.log(`getTezBalanceForAddress failed for ${JSON.stringify(accountQuery)} with ${error}`)
+    }
+
+    return balance
+}
+
+
+const gethDAOPerTez = async() => {
+    const tezBalance = await(getTezBalanceForAddress(quipuSwapContract))
+    const hdaoBalance = await(gethDaoBalanceForAddress(quipuSwapContract))
+    return hdaoBalance / tezBalance
+}
+
+const getTezPerhDAO = async() => {
+    hDAOpTez = await gethDAOPerTez()
+    return 1 / hDAOpTez
+}
+
+
 
 const gethDaoBalances = async () => {
     let hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
@@ -309,8 +340,22 @@ const getFeaturedArtisticUniverse = async(max_time) => {
 
     artisticUniverse = await getArtisticUniverse(max_time)
 
+    hdaoPerTez = await gethDAOPerTez()
+
+    // Cost to be on feed per objekt last 7 days shouldn't be higher than:
+    //   0.1tez
+    //   1 hDAO 
+    // But not lower than:
+    //   0.01 hDAO
+    //
+    // We should probably add more thresholds like $, € and yen
+    // It should be cheap but not too cheap and it shouldn't be
+    // affected by tez or hDAO volatility
+
+    thresholdHdao = Math.min(1_000_000, Math.max(100_000 * hdaoPerTez, 10_000))
+
     return artisticUniverse.filter(function (o) {
-        return ((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > 1000000
+        return ((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > thresholdHdao
     })
 }
 
