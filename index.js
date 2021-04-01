@@ -5,6 +5,9 @@ const cors = require('cors')
 const _ = require('lodash')
 const conseilUtil = require('./conseilUtil')
 const { random } = require('lodash')
+
+const BURN_ADDRESS = 'tz1burnburnburnburnburnburnburjAYjjX'
+
 require('dotenv').config()
 
 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue)
@@ -202,9 +205,25 @@ const getTzLedger = async (tz, res) => {
 
     console.log(hdao)
 
+    var validCreations = []
+
+    await Promise.all(creations.map(async (c) => {
+        c.token_id = c.objectId;
+
+        await owners(c)
+
+        if (c.owners[BURN_ADDRESS] === undefined) {
+            delete c.owners
+
+            validCreations.push(c)
+        }
+
+        return arr
+    }));
+
     var arr = []
-    console.log([...collection, ...creations])
-    var arr = [...collection, ...creations]
+    console.log([...collection, ...validCreations])
+    var arr = [...collection, ...validCreations]
 
     var result = arr.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
