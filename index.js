@@ -358,6 +358,6 @@ app.post('/hdao', async (req, res) => {
 const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-app.listen(3001)
-//module.exports.handler = serverless(app)
+//app.listen(3001)
+module.exports.handler = serverless(app)
 
