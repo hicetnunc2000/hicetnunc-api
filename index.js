@@ -153,14 +153,19 @@ const randomFeed = async (counter, res) => {
     })
 }
 
-const getFeed = async (counter, res) => {
+const getFeed = async (counter, res, featured) => {
 
     /*     const now_time = Date.now()
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
      */
     console.log('feed')
-    var arr = await conseilUtil.getArtisticUniverse(0)
+    var arr
+    if (featured) {
+        arr = await conseilUtil.getFeaturedArtisticUniverse(0)
+    } else {
+        arr = await conseilUtil.getArtisticUniverse(0)
+    }
 
     var feed = offset(desc(arr), counter)
     console.log(feed)
@@ -302,7 +307,19 @@ app.post('/feed', async (req, res) => {
             max_time = null
         } 
     */
-    await getFeed(req.body.counter, res)
+    await getFeed(req.body.counter, res, true)
+})
+
+app.post('/all', async (req, res) => {
+    /*     
+        var counter = req.query.counter
+        var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
+        const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
+        if (max_time != null & max_time > now_time_qt) {
+            max_time = null
+        } 
+    */
+    await getFeed(req.body.counter, res, false)
 })
 
 app.post('/random', async (req, res) => {
@@ -341,6 +358,6 @@ app.post('/hdao', async (req, res) => {
 const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-//app.listen(3001)
-module.exports.handler = serverless(app)
+app.listen(3001)
+//module.exports.handler = serverless(app)
 

@@ -101,6 +101,67 @@ const gethDaoBalanceForAddress = async (address) => {
     return balance
 }
 
+const gethDaoBalances = async () => {
+    let hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(hDaoBalanceQuery, 'key', 'value');
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.daoLedger])
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(hDaoBalanceQuery, 'value', conseiljs.ConseilOperator.EQ, [0], true)
+    hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(hDaoBalanceQuery, 500_000)
+
+    let balance = 0
+    let hdaoMap = {}
+
+    try {
+        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', hDaoBalanceQuery);
+        
+
+        balanceResult.forEach(row => {
+            hdaoMap[conseiljs.TezosMessageUtils.readAddress(row['key'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1'))] = row['value']
+        })
+        //#balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+    } catch (error) {
+        console.log(`gethDaoBalanceForAddress failed for ${JSON.stringify(hDaoBalanceQuery)} with ${error}`)
+    }
+
+
+    return hdaoMap
+
+}
+
+const getObjektMintingsLastWeek = async () => {
+    var d = new Date();
+    d.setDate(d.getDate()-5);
+    let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'source');
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [d.getTime()]) // 2021 Feb 1
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(mintOperationQuery, 'block_level', conseiljs.ConseilSortDirection.DESC)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 900_000) // TODO: this is hardwired and will not work for highly productive artists
+
+    const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+        { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+        'mainnet',
+        'operations',
+        mintOperationQuery);
+
+    const mints = mintOperationResult.map(r => r['source'])
+
+    var initialValue = {}
+    var reducer = function(minters, mintOp) {
+    if (!minters[mintOp]) {
+        minters[mintOp] = 1;
+    } else {
+        minters[mintOp] = minters[mintOp] + 1;
+    }
+    return minters;
+    }
+    return mints.reduce(reducer, initialValue)
+}
+
+
 /**
  * Queries Conseil in two steps to get all the objects minted by a specific address. Step 1 is to query for all 'mint_OBJKT' operations performed by the account to get the list of operation group hashes. Then that list is partitioned into chunks and another query (or set of queries) is run to get big_map values. These values are then parsed into an array of 3-tuples containing the hashed big_map key that can be used to query a Tezos node directly, the nft token id and the ipfs item hash.
  * 
@@ -239,6 +300,20 @@ const getArtisticUniverse = async (max_time) => {
     return universe
 }
 
+
+const getFeaturedArtisticUniverse = async(max_time) => {
+
+    hdaoMap = await gethDaoBalances()
+
+    mintsPerCreator = await getObjektMintingsLastWeek()
+
+    artisticUniverse = await getArtisticUniverse(max_time)
+
+    return artisticUniverse.filter(function (o) {
+        return ((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > 1000000
+    })
+}
+
 /**
  * Returns object ipfs hash and swaps if any
  * 
@@ -304,5 +379,6 @@ module.exports = {
     getArtisticOutputForAddress,
     getObjectById,
     getArtisticUniverse,
+    getFeaturedArtisticUniverse,
     hDAOFeed
 }
