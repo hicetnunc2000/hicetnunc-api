@@ -212,7 +212,10 @@ const getTzLedger = async (tz, res) => {
 
         await owners(c)
 
-        if (c.owners[BURN_ADDRESS] === undefined) {
+        var burnAddrCount = c.owners[BURN_ADDRESS]
+        var allIssuesBurned = burnAddrCount && burnAddrCount === c.total_amount
+
+        if (!allIssuesBurned) {
             delete c.owners
 
             validCreations.push(c)
