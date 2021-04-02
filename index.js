@@ -208,7 +208,7 @@ const getTzLedger = async (tz, res) => {
     var validCreations = []
 
     await Promise.all(creations.map(async (c) => {
-        c.token_id = c.objectId;
+        c.token_id = c.objectId
 
         await owners(c)
 
@@ -219,7 +219,7 @@ const getTzLedger = async (tz, res) => {
         }
 
         return arr
-    }));
+    }))
 
     var arr = []
     console.log([...collection, ...validCreations])
