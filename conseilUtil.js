@@ -9,7 +9,6 @@ conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
 const tezosNode = ''
-const quipuSwapContract = "KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph"
 const mainnet = require('./config').networkConfig
 
 
@@ -101,6 +100,35 @@ const gethDaoBalanceForAddress = async (address) => {
     return balance
 }
 
+const getTokenBalance = async (big_map_id, address, fa2=false, token_id=0) => {
+    let tokenBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(tokenBalanceQuery, 'value');
+    tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(tokenBalanceQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [big_map_id])
+    if (fa2) {
+        tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(tokenBalanceQuery, 'key', conseiljs.ConseilOperator.EQ, [
+            `Pair 0x${conseiljs.TezosMessageUtils.writeAddress(address)} ${token_id}`
+        ])
+    }
+    else {
+        tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(tokenBalanceQuery, 'key', conseiljs.ConseilOperator.EQ, [
+            `0x${conseiljs.TezosMessageUtils.writeAddress(address)}`
+        ])
+    }
+    tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(tokenBalanceQuery, 'value', conseiljs.ConseilOperator.EQ, [0], true)
+    tokenBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(tokenBalanceQuery, 1)
+
+    let balance = 0
+
+    try {
+        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', tokenBalanceQuery);
+        balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+    } catch (error) {
+        console.log(`getTokenBalance failed for ${JSON.stringify(tokenBalanceQuery)} with ${error}`)
+    }
+
+    return balance
+}
+
 
 const getTezBalanceForAddress = async (address) => {
     let accountQuery = conseiljs.ConseilQueryBuilder.blankQuery();
@@ -120,16 +148,21 @@ const getTezBalanceForAddress = async (address) => {
 
 
 const gethDAOPerTez = async() => {
-    const tezBalance = await(getTezBalanceForAddress(quipuSwapContract))
-    const hdaoBalance = await(gethDaoBalanceForAddress(quipuSwapContract))
+    const tezBalance = await(getTezBalanceForAddress(mainnet.hDaoSwap))
+    const hdaoBalance = await(gethDaoBalanceForAddress(mainnet.hDaoSwap))
     return hdaoBalance / tezBalance
 }
 
-const getTezPerhDAO = async() => {
-    hDAOpTez = await gethDAOPerTez()
-    return 1 / hDAOpTez
+const getKolibriPerTez = async() => {
+    const tezBalance = await(getTezBalanceForAddress(mainnet.kolibriSwap))
+    //console.log("Tez balance", tezBalance)
+    var kolibriBalance = await(getTokenBalance(mainnet.kolibriLedger, mainnet.kolibriSwap))
+    kolibriBalance = parseInt(kolibriBalance.replace("Pair {} ", "")) / (10**((18 - 6)))
+    //console.log(kolibriBalance)
+    //console.log(typeof(kolibriBalance))
+    //console.log("Kol balance", kolibriBalance)
+    return kolibriBalance / tezBalance
 }
-
 
 
 const gethDaoBalances = async () => {
@@ -359,6 +392,18 @@ const getFeaturedArtisticUniverse = async(max_time) => {
     })
 }
 
+const getRecommendedCurateDefault = async() => {
+    hdaoPerTez = await gethDAOPerTez()
+    kolPerTez = await getKolibriPerTez()
+    //console.log("hdaoPerTez", hdaoPerTez)
+    //console.log("kolPerTez", kolPerTez)
+    hdaoPerKol = hdaoPerTez / kolPerTez
+    //console.log("hdaoPerKol", hdaoPerKol)
+
+    //Minimum of $0.1, 0.1 hDAO, and 0.1tez, in hDAO
+    return Math.floor(Math.min(hdaoPerKol * 0.1, 0.1, 0.1 * hdaoPerTez) * 1_000_000)
+}
+
 /**
  * Returns object ipfs hash and swaps if any
  * 
@@ -425,5 +470,6 @@ module.exports = {
     getObjectById,
     getArtisticUniverse,
     getFeaturedArtisticUniverse,
-    hDAOFeed
+    hDAOFeed,
+    getRecommendedCurateDefault
 }

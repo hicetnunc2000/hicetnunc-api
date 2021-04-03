@@ -351,6 +351,11 @@ app.post('/objkt', async (req, res) => {
         res.json({ result: await getObjktById(req.body.objkt_id) })
 })
 
+app.get('/recommend_curate', async (req, res) => {
+    const amt = await conseilUtil.getRecommendedCurateDefault()
+    res.json({ amount: amt })
+})
+
 app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
