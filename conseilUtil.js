@@ -370,6 +370,73 @@ const getObjectOwnersById = async (objectId) => {
     return ownerMap
 }
 
+const listSwaps = async () => {
+    let swapsQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+    swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value')
+    swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftSwapMap])
+    swapsQuery = conseiljs.ConseilQueryBuilder.
+    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 50_000)
+
+    const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', swapsQuery)
+
+    const swapValuePattern = new RegExp('Pair [(]Pair 0x([0-9a-z]{44}) ([0-9]+)[)] [(]Pair ([0-9]+) ([0-9]+)[)]');
+    const swapList = swapsResult
+        .filter(row => row['value'] && row['value'].length > 0)
+        .map(row => {
+            const swapDefinition = row['value']
+
+            if (swapValuePattern.test(swapDefinition)) {
+                match = swapDefinition.match(swapValuePattern);
+
+                return {
+                    swap_id: row['key'],
+                    issuer: conseiljs.TezosMessageUtils.readAddress(match[1]),
+                    objkt_id: match[3],
+                    objkt_amount: match[2],
+                    xtz_per_objkt: (new BigNumber(match[4])).dividedBy(1_000_000).toFixed(6)
+                }
+            }
+
+            return undefined
+        }).filter(row => row)
+
+    const distinctIds = [... new Set(swapList.map(swap => swap['swap_id']))]
+    const ipfsMap = await getObjktInfoUrl(distinctIds)
+
+    swapList.forEach(row => {
+        row['ipfsHash'] = ipfsMap[row['objkt_id']] || ''
+    })
+
+    return swapList.filter(row => row['ipfsHash'].length)
+}
+
+const getObjktInfoUrl = async (objktList) => {
+    const queryChunks = chunkArray(objktList, 100)
+
+    const makeObjectQuery = (keys) => {
+        let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addFields(mintedObjectsQuery, 'key_hash', 'value');
+        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintedObjectsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftMetadataMap])
+        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintedObjectsQuery, 'key', (keys.length > 1 ? conseiljs.ConseilOperator.IN : conseiljs.ConseilOperator.EQ), keys)
+        mintedObjectsQuery = conseiljs.ConseilQueryBuilder.setLimit(mintedObjectsQuery, keys.length)
+
+        return mintedObjectsQuery
+    }
+
+    const objectQueries = queryChunks.map(c => makeObjectQuery(c))
+    const objectIpfsMap = {}
+    await Promise.all(objectQueries.map(async (q) => await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', q)
+        .then(result => result.map(row => {
+            const objectId = row['value'].toString().replace(/^Pair ([0-9]{1,}) .*/, '$1')
+            const objectUrl = row['value'].toString().replace(/.* 0x([0-9a-z]{1,}) \}$/, '$1')
+            const ipfsHash = Buffer.from(objectUrl, 'hex').toString().slice(7);
+
+            objectIpfsMap[objectId] = ipfsHash
+    }))))
+
+    return objectIpfsMap
+}
+
 const chunkArray = (arr, len) => { // TODO: move to util.js
     let chunks = [],
         i = 0,
@@ -395,4 +462,5 @@ module.exports = {
     getObjectById,
     getObjectOwnersById,
     getArtisticUniverse,
+    listSwaps
 }
