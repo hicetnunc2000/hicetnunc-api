@@ -298,7 +298,7 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
-app.post('/feed', async (req, res) => {
+app.post('/featured', async (req, res) => {
     /*     
         var counter = req.query.counter
         var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
@@ -310,7 +310,7 @@ app.post('/feed', async (req, res) => {
     await getFeed(req.body.counter, res, true)
 })
 
-app.post('/all', async (req, res) => {
+app.post('/feed', async (req, res) => {
     /*     
         var counter = req.query.counter
         var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
