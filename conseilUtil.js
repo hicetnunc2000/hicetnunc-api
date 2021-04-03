@@ -374,7 +374,7 @@ const listSwaps = async () => {
     let swapsQuery = conseiljs.ConseilQueryBuilder.blankQuery()
     swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value')
     swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftSwapMap])
-    swapsQuery = conseiljs.ConseilQueryBuilder.
+    swapsQuery = conseiljs.ConseilQueryBuilder.addOrdering(swapsQuery, 'block_level', conseiljs.ConseilSortDirection.DESC)
     swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 50_000)
 
     const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', swapsQuery)
