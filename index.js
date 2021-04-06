@@ -6,6 +6,7 @@ const _ = require('lodash')
 const conseilUtil = require('./conseilUtil')
 const { random } = require('lodash')
 require('dotenv').config()
+const { Semaphore } =  require('prex')
 
 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue)
 
@@ -295,21 +296,23 @@ app.use(cors({ origin: '*' }))
 // used for very simple caching of the feed
 const feedCacheTimeLimit = ONE_MINUTE_MILLIS / 6 // 10 seconds
 const feedCache = {}
+const feedLock = new Semaphore(1)
 
 app.post('/feed', async (req, res) => {
     const feedOffset = req.body.counter
 
+    await feedLock.wait()
     if (feedCache[feedOffset] && Date.now() - feedCache[feedOffset].expires < feedCacheTimeLimit) {
+        await feedLock.release()
         return res.json({ result: feedCache[feedOffset].data })
     }
 
-    // this should use a semaphore in case two requests come in at the same time
-    // for non-cached data
     const aux_arr = await getFeed(feedOffset)
     feedCache[feedOffset] = {
         expires: Date.now(),
         data: aux_arr
     }
+    await feedLock.release()
 
     return res.json({ result: aux_arr })
 })
