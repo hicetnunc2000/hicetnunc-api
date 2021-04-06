@@ -5,6 +5,9 @@ const cors = require('cors')
 const _ = require('lodash')
 const conseilUtil = require('./conseilUtil')
 const { random } = require('lodash')
+
+const BURN_ADDRESS = 'tz1burnburnburnburnburnburnburjAYjjX'
+
 require('dotenv').config()
 const { Semaphore } =  require('prex')
 
@@ -159,6 +162,7 @@ const getFeed = async (counter) => {
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
      */
+    console.log('feed')
     var arr = await conseilUtil.getArtisticUniverse(0)
 
     var feed = offset(desc(arr), counter)
@@ -201,9 +205,28 @@ const getTzLedger = async (tz, res) => {
 
     console.log(hdao)
 
+    var validCreations = []
+
+    await Promise.all(creations.map(async (c) => {
+        c.token_id = c.objectId
+
+        await owners(c)
+
+        var burnAddrCount = c.owners[BURN_ADDRESS]
+        var allIssuesBurned = burnAddrCount && burnAddrCount === c.total_amount
+
+        if (!allIssuesBurned) {
+            delete c.owners
+
+            validCreations.push(c)
+        }
+
+        return arr
+    }))
+
     var arr = []
-    console.log([...collection, ...creations])
-    var arr = [...collection, ...creations]
+    console.log([...collection, ...validCreations])
+    var arr = [...collection, ...validCreations]
 
     var result = arr.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
@@ -267,7 +290,7 @@ const hDAOFeed = async (counter, res) => {
 
     var hDAO = await conseilUtil.hDAOFeed()
     var set = _.orderBy(hDAO, ['hDAO_balance'], ['desc'])
-    var objkts = await (offset(set, 0)).map(async e => await mergehDAO(e))
+    var objkts = await (offset(set, counter)).map(async e => await mergehDAO(e))
 
     var promise = Promise.all(objkts.map(e => e))
     promise.then(results => {
@@ -325,9 +348,9 @@ const getRestrictedObjkts = async () => {
 
 //getObjkts()
 //testSwaps()
-//getFeed(0)
+//getFeed(1)
 //getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
-//getObjktById(5965)
+//getObjktById(15306)
 //const test2 = async () => console.log(await getObjktLedger())
 //test2()
 
@@ -404,7 +427,7 @@ app.post('/hdao', async (req, res) => {
 // const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-app.listen(3001)
-console.log('Server running on localhost:3001')
-//module.exports.handler = serverless(app)
+//app.listen(3001)
+//console.log('SERVER RUNNING ON localhost:3001')
+module.exports.handler = serverless(app)
 
