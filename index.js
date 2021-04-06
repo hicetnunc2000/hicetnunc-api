@@ -11,7 +11,6 @@ const { Semaphore } =  require('prex')
 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue)
 
 const getIpfsHash = async (ipfsHash) => {
-
     return await axios.get('https://cloudflare-ipfs.com/ipfs/' + ipfsHash).then(res => res.data)
     /*    const nftDetailJson = await nftDetails.json();
    
@@ -47,14 +46,14 @@ const owners = async (obj) => {
     var values_arr = (_.values(owners))
     obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? values_arr.filter(e => parseInt(e) > 0).reduce(reducer) : 0
     obj.owners = owners
-    console.log(obj)
+    // console.log(obj)
     //obj.total_amount = (values_arr.map(e => parseInt(e))).reduce(reducer)
     return obj
 }
 
 const totalAmountIntegral = async (obj) => {
     var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
-    console.log(owners)
+    // console.log(owners)
     var values_arr = (_.values(owners))
     obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? (values_arr.filter(e => parseInt(e))) : 0
 
@@ -142,14 +141,14 @@ const randomFeed = async (counter, res) => {
     feed = await feed.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
         e.token_id = parseInt(e.objectId)
-        console.log(e)
+        // console.log(e)
         return e
     })
     var promise = Promise.all(feed.map(e => e))
     promise.then(async (results) => {
         var aux_arr = results.map(e => e)
         //res.set('Cache-Control', `public, max-age=${cache_time}`)
-        console.log(aux_arr)
+        // console.log(aux_arr)
         res.json({ result: aux_arr })
     })
 }
@@ -163,7 +162,7 @@ const getFeed = async (counter) => {
     var arr = await conseilUtil.getArtisticUniverse(0)
 
     var feed = offset(desc(arr), counter)
-    console.log(feed)
+    // console.log(feed)
     feed = await feed.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
         e.token_id = parseInt(e.objectId)
@@ -184,7 +183,7 @@ const getFeed = async (counter) => {
 
         //res.set('Cache-Control', `public, max-age=${cache_time}`)
 
-        console.log(aux_arr)
+        // console.log(aux_arr)
         return aux_arr
     })
 }
@@ -294,16 +293,24 @@ app.use(express.json())
 app.use(cors({ origin: '*' }))
 
 // used for very simple caching of the feed
-const feedCacheTimeLimit = ONE_MINUTE_MILLIS / 6 // 10 seconds
+const feedCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
 const feedCache = {}
-const feedLock = new Semaphore(1)
+const feedLocks = new Semaphore(1)
+
+const getFeedLock = function(offset) {
+    if (!feedLocks[offset]) {
+        feedLocks[offset] = new Semaphore(1)
+    }
+    return feedLocks[offset]
+}
 
 app.post('/feed', async (req, res) => {
-    const feedOffset = req.body.counter
+    const feedOffset = req.body.counter || 0
 
-    await feedLock.wait()
+    await getFeedLock(feedOffset).wait()
     if (feedCache[feedOffset] && Date.now() - feedCache[feedOffset].expires < feedCacheTimeLimit) {
-        await feedLock.release()
+        await getFeedLock(feedOffset).release()
+        // console.log('Feed from CACHE')
         return res.json({ result: feedCache[feedOffset].data })
     }
 
@@ -312,8 +319,8 @@ app.post('/feed', async (req, res) => {
         expires: Date.now(),
         data: aux_arr
     }
-    await feedLock.release()
-
+    await getFeedLock(feedOffset).release()
+    // console.log('Feed from NEW')
     return res.json({ result: aux_arr })
 })
 
