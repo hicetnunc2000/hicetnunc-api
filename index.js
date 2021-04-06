@@ -156,14 +156,19 @@ const randomFeed = async (counter, res) => {
     })
 }
 
-const getFeed = async (counter, res) => {
+const getFeed = async (counter, res, featured) => {
 
     /*     const now_time = Date.now()
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
      */
-    console.log('feed')
-    var arr = await conseilUtil.getArtisticUniverse(0)
+    console.log(`feed, featured: ${featured}`)
+    var arr
+    if (featured) {
+        arr = await conseilUtil.getFeaturedArtisticUniverse(0)
+    } else {
+        arr = await conseilUtil.getArtisticUniverse(0)
+    }
 
     var feed = offset(desc(arr), counter)
     console.log(feed)
@@ -315,6 +320,18 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
+app.post('/featured', async (req, res) => {
+    /*     
+        var counter = req.query.counter
+        var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
+        const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
+        if (max_time != null & max_time > now_time_qt) {
+            max_time = null
+        } 
+    */
+    await getFeed(req.body.counter, res, true)
+})
+
 app.post('/feed', async (req, res) => {
     /*     
         var counter = req.query.counter
@@ -324,7 +341,7 @@ app.post('/feed', async (req, res) => {
             max_time = null
         } 
     */
-    await getFeed(req.body.counter, res)
+    await getFeed(req.body.counter, res, false)
 })
 
 app.post('/random', async (req, res) => {
@@ -354,6 +371,11 @@ app.post('/objkt', async (req, res) => {
         res.json({ result: [] })
         :
         res.json({ result: await getObjktById(req.body.objkt_id) })
+})
+
+app.get('/recommend_curate', async (req, res) => {
+    const amt = await conseilUtil.getRecommendedCurateDefault()
+    res.json({ amount: amt })
 })
 
 app.post('/hdao', async (req, res) => {
