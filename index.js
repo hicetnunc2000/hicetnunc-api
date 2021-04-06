@@ -162,7 +162,7 @@ const getFeed = async (counter, res, featured) => {
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
      */
-    console.log('feed')
+    console.log(`feed, featured: ${featured}`)
     var arr
     if (featured) {
         arr = await conseilUtil.getFeaturedArtisticUniverse(0)
