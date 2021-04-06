@@ -279,6 +279,50 @@ const hDAOFeed = async (counter, res) => {
     })
 }
 
+// list of restricted addresses
+const restrictedAdddressesCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
+let restrictedAddressesCache = null
+const restrictedAddressesLock = new Semaphore(1)
+const getRestrictedAddresses = async () => {
+    await restrictedAddressesLock.wait()
+    if (restrictedAddressesCache && Date.now() - restrictedAddressesCache.expires < restrictedAdddressesCacheTimeLimit) {
+        restrictedAddressesLock.release()
+        // console.log('ADDRESS restrictions from CACHE')
+        return restrictedAddressesCache.data
+    }
+
+    const list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
+    restrictedAddressesCache = {
+        expires: Date.now(),
+        data: list
+    }
+    restrictedAddressesLock.release()
+    // console.log('ADDRESS restrictions from NEW')
+    return list
+}
+
+// list of restricted objkts
+const restrictedObjectsCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
+let restrictedObjectsCache = null
+const restrictedObjectsLock = new Semaphore(1)
+const getRestrictedObjkts = async () => {
+    await restrictedObjectsLock.wait()
+    if (restrictedObjectsCache && Date.now() - restrictedObjectsCache.expires < restrictedObjectsCacheTimeLimit) {
+        restrictedObjectsLock.release()
+        // console.log('OBJKT restrictions from CACHE')
+        return restrictedObjectsCache.data
+    }
+
+    const list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
+    restrictedObjectsCache = {
+        expires: Date.now(),
+        data: list
+    }
+    restrictedObjectsLock.release()
+    // console.log('OBJKT restrictions from NEW')
+    return list
+}
+
 //getObjkts()
 //testSwaps()
 //getFeed(0)
@@ -295,9 +339,9 @@ app.use(cors({ origin: '*' }))
 // used for very simple caching of the feed
 const feedCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
 const feedCache = {}
-const feedLocks = new Semaphore(1)
+const feedLocks = {}
 
-const getFeedLock = function(offset) {
+const getFeedLock = (offset) => {
     if (!feedLocks[offset]) {
         feedLocks[offset] = new Semaphore(1)
     }
@@ -309,7 +353,7 @@ app.post('/feed', async (req, res) => {
 
     await getFeedLock(feedOffset).wait()
     if (feedCache[feedOffset] && Date.now() - feedCache[feedOffset].expires < feedCacheTimeLimit) {
-        await getFeedLock(feedOffset).release()
+        getFeedLock(feedOffset).release()
         // console.log('Feed from CACHE')
         return res.json({ result: feedCache[feedOffset].data })
     }
@@ -319,7 +363,7 @@ app.post('/feed', async (req, res) => {
         expires: Date.now(),
         data: aux_arr
     }
-    await getFeedLock(feedOffset).release()
+    getFeedLock(feedOffset).release()
     // console.log('Feed from NEW')
     return res.json({ result: aux_arr })
 })
@@ -331,7 +375,7 @@ app.post('/random', async (req, res) => {
 app.post('/tz', async (req, res) => {
 
     // list of restricted addresses
-    var list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
+    var list = await getRestrictedAddresses()
 
     list.includes(req.body.tz)
         ?
@@ -344,7 +388,7 @@ app.post('/tz', async (req, res) => {
 app.post('/objkt', async (req, res) => {
 
     // list of restricted objkts
-    var list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
+    var list = await getRestrictedObjkts()
 
     list.includes(parseInt(req.body.objkt_id))
         ?
