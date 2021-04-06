@@ -280,6 +280,21 @@ const getObjktById = async (id, res) => {
     //https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=842
 }
 
+const getCollectionById = async (id, res) => {
+    // fake for now, but should get populated from a smart contract as we spoke
+    var fake_data = {
+        "joanie" : [2000, 20001, 20003, 20004, 20005] // this should probably use getObjktById or similar method used in feed/user wallet
+    }
+    
+    // if we match a collection (joanie, object4object, etc)
+    if (fake_data[id]) {
+        return fake_data[id];
+    }
+    
+    // if collection doesnt exist
+    return []
+}
+
 const mergehDAO = async (obj) => {
     var obj_aux = await getObjktById(obj.token_id)
     obj_aux.hDAO_balance = obj.hDAO_balance
@@ -358,6 +373,10 @@ app.post('/objkt', async (req, res) => {
 
 app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
+})
+
+app.post('/collection', async (req, res) => {
+    await getCollectionById(req.body.collection_id)
 })
 
 const testhdao = async () =>  await hDAOFeed(parseInt(0))
