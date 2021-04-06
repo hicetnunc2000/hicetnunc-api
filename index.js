@@ -153,7 +153,7 @@ const randomFeed = async (counter, res) => {
     })
 }
 
-const getFeed = async (counter, res) => {
+const getFeed = async (counter) => {
 
     /*     const now_time = Date.now()
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
@@ -178,13 +178,13 @@ const getFeed = async (counter, res) => {
            cache_time = (int)(((max_time + ONE_MINUTE_MILLIS) - now_time) / 1000)
        } */
     var promise = Promise.all(feed.map(e => e))
-    promise.then(async (results) => {
+    return promise.then(async (results) => {
         var aux_arr = results.map(e => e)
 
         //res.set('Cache-Control', `public, max-age=${cache_time}`)
 
         console.log(aux_arr)
-        res.json({ result: aux_arr })
+        return aux_arr
     })
 }
 
@@ -292,16 +292,26 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
+// used for very simple caching of the feed
+const feedCacheTimeLimit = ONE_MINUTE_MILLIS / 6 // 10 seconds
+const feedCache = {}
+
 app.post('/feed', async (req, res) => {
-    /*     
-        var counter = req.query.counter
-        var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
-        const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
-        if (max_time != null & max_time > now_time_qt) {
-            max_time = null
-        } 
-    */
-    await getFeed(req.body.counter, res)
+    const feedOffset = req.body.counter
+
+    if (feedCache[feedOffset] && Date.now() - feedCache[feedOffset].expires < feedCacheTimeLimit) {
+        return res.json({ result: feedCache[feedOffset].data })
+    }
+
+    // this should use a semaphore in case two requests come in at the same time
+    // for non-cached data
+    const aux_arr = await getFeed(feedOffset)
+    feedCache[feedOffset] = {
+        expires: Date.now(),
+        data: aux_arr
+    }
+
+    return res.json({ result: aux_arr })
 })
 
 app.post('/random', async (req, res) => {
@@ -337,9 +347,10 @@ app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
 
-const testhdao = async () =>  await hDAOFeed(parseInt(0))
+// const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
 app.listen(3001)
+console.log('Server running on localhost:3001')
 //module.exports.handler = serverless(app)
 
