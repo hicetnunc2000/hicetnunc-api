@@ -255,7 +255,7 @@ const getArtisticUniverse = async (max_time) => {
     let swapsQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     swapsQuery = conseiljs.ConseilQueryBuilder.addFields(swapsQuery, 'key', 'value')
     swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(swapsQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftSwapMap])
-    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 30_000)
+    swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 30_000) // NOTE, limited to 30_000
 
     const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', swapsQuery)
 
