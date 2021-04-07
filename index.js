@@ -156,14 +156,18 @@ const randomFeed = async (counter, res) => {
     })
 }
 
-const getFeed = async (counter) => {
-
+const getFeed = async (counter, featured) => {
     /*     const now_time = Date.now()
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
      */
-    console.log('feed')
-    var arr = await conseilUtil.getArtisticUniverse(0)
+    console.log(`feed, featured: ${featured}`)
+    var arr
+    if (featured) {
+        arr = await conseilUtil.getFeaturedArtisticUniverse(0)
+    } else {
+        arr = await conseilUtil.getArtisticUniverse(0)
+    }
 
     var feed = offset(desc(arr), counter)
     // console.log(feed)
@@ -223,6 +227,8 @@ const getTzLedger = async (tz, res) => {
 
         return arr
     }))
+
+    validCreations = validCreations.sort((a, b) => parseInt(b.objectId) - parseInt(a.objectId))
 
     var arr = []
     console.log([...collection, ...validCreations])
@@ -364,29 +370,31 @@ const feedCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about onc
 const feedCache = {}
 const feedLocks = {}
 
-const getFeedLock = (offset) => {
-    if (!feedLocks[offset]) {
-        feedLocks[offset] = new Semaphore(1)
+const getFeedLock = (key) => {
+    if (!feedLocks[key]) {
+        feedLocks[key] = new Semaphore(1)
     }
-    return feedLocks[offset]
+    return feedLocks[key]
 }
 
-app.post('/feed', async (req, res) => {
+app.post('/feed|/featured', async (req, res) => {
     const feedOffset = req.body.counter || 0
+    const isFeatured = req.path === '/featured'
+    const lockKey = `${feedOffset}-${isFeatured ? 'featured' : ''}`
 
-    await getFeedLock(feedOffset).wait()
-    if (feedCache[feedOffset] && Date.now() - feedCache[feedOffset].expires < feedCacheTimeLimit) {
-        getFeedLock(feedOffset).release()
+    await getFeedLock(lockKey).wait()
+    if (feedCache[lockKey] && Date.now() - feedCache[lockKey].expires < feedCacheTimeLimit) {
+        getFeedLock(lockKey).release()
         // console.log('Feed from CACHE')
-        return res.json({ result: feedCache[feedOffset].data })
+        return res.json({ result: feedCache[lockKey].data })
     }
 
-    const aux_arr = await getFeed(feedOffset)
-    feedCache[feedOffset] = {
+    const aux_arr = await getFeed(feedOffset, isFeatured)
+    feedCache[lockKey] = {
         expires: Date.now(),
         data: aux_arr
     }
-    getFeedLock(feedOffset).release()
+    getFeedLock(lockKey).release()
     // console.log('Feed from NEW')
     return res.json({ result: aux_arr })
 })
@@ -420,6 +428,11 @@ app.post('/objkt', async (req, res) => {
         res.json({ result: await getObjktById(req.body.objkt_id) })
 })
 
+app.get('/recommend_curate', async (req, res) => {
+    const amt = await conseilUtil.getRecommendedCurateDefault()
+    res.json({ amount: amt })
+})
+
 app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
@@ -427,7 +440,7 @@ app.post('/hdao', async (req, res) => {
 // const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-//app.listen(3001)
-//console.log('SERVER RUNNING ON localhost:3001')
-module.exports.handler = serverless(app)
+app.listen(3001)
+console.log('SERVER RUNNING ON localhost:3001')
+// module.exports.handler = serverless(app)
 
