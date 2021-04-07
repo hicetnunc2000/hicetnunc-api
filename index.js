@@ -229,6 +229,8 @@ const getTzLedger = async (tz, res) => {
         return arr
     }))
 
+    validCreations = validCreations.sort((a, b) => parseInt(b.objectId) - parseInt(a.objectId))
+
     var arr = []
     console.log([...collection, ...validCreations])
     var arr = [...collection, ...validCreations]
