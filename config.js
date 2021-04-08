@@ -9,10 +9,7 @@ const mainnet = {
     nftSwapMap: 523,
     curationsPtr: 519,
     nftRoyaltiesMap: 522,
-    daoLedger: 515,
-    kolibriLedger: 380,
-    hDaoSwap: "KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph", 
-    kolibriSwap: "KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2",
+    daoLedger: 515
 }
 
 module.exports = {
