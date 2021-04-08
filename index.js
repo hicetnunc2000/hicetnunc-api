@@ -298,6 +298,7 @@ app.post('/objkt', async (req, res) => {
 
 app.get('/recommend_curate', async (req, res) => {
     const amt = await conseilUtil.getRecommendedCurateDefault()
+    res.set('Cache-Control', `public, max-age=300`)
     res.json({ amount: amt })
 })
 
