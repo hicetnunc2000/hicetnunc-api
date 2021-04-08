@@ -350,14 +350,17 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async (max_time) => {
+    var d = new Date();
+    d.setDate(d.getDate()-14);
     let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [d.getTime()]) //Two weeks ago
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 30_000)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(mintOperationQuery, 'block_level', conseiljs.ConseilSortDirection.DESC)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 2500)
 
     const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
