@@ -9,7 +9,6 @@ conseiljs.registerLogger(logger)
 conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
-const tezosNode = ''
 const mainnet = require('./config').networkConfig
 
 
@@ -227,12 +226,10 @@ const gethDAOPerTez = async() => {
 
 const getKolibriPerTez = async() => {
     const tezBalance = await(getTezBalanceForAddress(mainnet.kolibriSwap))
-    //console.log("Tez balance", tezBalance)
     var kolibriBalance = await(getTokenBalance(mainnet.kolibriLedger, mainnet.kolibriSwap))
+
+    // TODO: Find a better way to get the balance, this is FA1.2, mike?
     kolibriBalance = parseInt(kolibriBalance.replace("Pair {} ", "")) / (10**((18 - 6)))
-    //console.log(kolibriBalance)
-    //console.log(typeof(kolibriBalance))
-    //console.log("Kol balance", kolibriBalance)
     return kolibriBalance / tezBalance
 }
 
@@ -314,7 +311,7 @@ const getArtisticOutputForAddress = async (address) => {
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'source', conseiljs.ConseilOperator.EQ, [address])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(mintOperationQuery, 'block_level', conseiljs.ConseilSortDirection.DESC)
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 30_000) // TODO: this is hardwired and will not work for highly productive artists
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 256) // TODO: this is hardwired and will not work for highly productive artists
 
     const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -350,14 +347,17 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async (max_time) => {
+    var d = new Date();
+    d.setDate(d.getDate()-14);
     let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery();
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(mintOperationQuery, 'operation_group_hash');
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'kind', conseiljs.ConseilOperator.EQ, ['transaction'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [1612240919000]) // 2021 Feb 1
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'timestamp', conseiljs.ConseilOperator.AFTER, [d.getTime()]) //Two weeks ago
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'status', conseiljs.ConseilOperator.EQ, ['applied'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'destination', conseiljs.ConseilOperator.EQ, [mainnet.protocol])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 30_000)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(mintOperationQuery, 'block_level', conseiljs.ConseilSortDirection.DESC)
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 2500)
 
     const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -460,18 +460,14 @@ const getFeaturedArtisticUniverse = async(max_time) => {
     thresholdHdao = Math.min(1_000_000, Math.max(100_000 * hdaoPerTez, 10_000))
 
     return artisticUniverse.filter(function (o) {
-        return (((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > thresholdHdao) || (mintsPerCreator[o.minter] <= 1)
+        return (((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > thresholdHdao)
     })
 }
 
 const getRecommendedCurateDefault = async() => {
     hdaoPerTez = await gethDAOPerTez()
     kolPerTez = await getKolibriPerTez()
-    //console.log("hdaoPerTez", hdaoPerTez)
-    //console.log("kolPerTez", kolPerTez)
     hdaoPerKol = hdaoPerTez / kolPerTez
-    //console.log("hdaoPerKol", hdaoPerKol)
-
     //Minimum of $0.1, 0.1 hDAO, and 0.1tez, in hDAO
     return Math.floor(Math.min(hdaoPerKol * 0.1, 0.1, 0.1 * hdaoPerTez) * 1_000_000)
 }
