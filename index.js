@@ -9,11 +9,11 @@ const { random } = require('lodash')
 const BURN_ADDRESS = 'tz1burnburnburnburnburnburnburjAYjjX'
 
 require('dotenv').config()
+const { Semaphore } =  require('prex')
 
 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue)
 
 const getIpfsHash = async (ipfsHash) => {
-
     return await axios.get('https://cloudflare-ipfs.com/ipfs/' + ipfsHash).then(res => res.data)
     /*    const nftDetailJson = await nftDetails.json();
    
@@ -49,14 +49,14 @@ const owners = async (obj) => {
     var values_arr = (_.values(owners))
     obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? values_arr.filter(e => parseInt(e) > 0).reduce(reducer) : 0
     obj.owners = owners
-    console.log(obj)
+    // console.log(obj)
     //obj.total_amount = (values_arr.map(e => parseInt(e))).reduce(reducer)
     return obj
 }
 
 const totalAmountIntegral = async (obj) => {
     var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
-    console.log(owners)
+    // console.log(owners)
     var values_arr = (_.values(owners))
     obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? (values_arr.filter(e => parseInt(e))) : 0
 
@@ -144,20 +144,19 @@ const randomFeed = async (counter, res) => {
     feed = await feed.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
         e.token_id = parseInt(e.objectId)
-        console.log(e)
+        // console.log(e)
         return e
     })
     var promise = Promise.all(feed.map(e => e))
     promise.then(async (results) => {
         var aux_arr = results.map(e => e)
         //res.set('Cache-Control', `public, max-age=${cache_time}`)
-        console.log(aux_arr)
+        // console.log(aux_arr)
         res.json({ result: aux_arr })
     })
 }
 
-const getFeed = async (counter, res, featured) => {
-
+const getFeed = async (counter, featured) => {
     /*     const now_time = Date.now()
         const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
         max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
@@ -171,7 +170,7 @@ const getFeed = async (counter, res, featured) => {
     }
 
     var feed = offset(desc(arr), counter)
-    console.log(feed)
+    // console.log(feed)
     feed = await feed.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
         e.token_id = parseInt(e.objectId)
@@ -187,13 +186,13 @@ const getFeed = async (counter, res, featured) => {
            cache_time = (int)(((max_time + ONE_MINUTE_MILLIS) - now_time) / 1000)
        } */
     var promise = Promise.all(feed.map(e => e))
-    promise.then(async (results) => {
+    return promise.then(async (results) => {
         var aux_arr = results.map(e => e)
 
         //res.set('Cache-Control', `public, max-age=${cache_time}`)
 
-        console.log(aux_arr)
-        res.json({ result: aux_arr })
+        // console.log(aux_arr)
+        return aux_arr
     })
 }
 
@@ -309,6 +308,50 @@ const hDAOFeed = async (counter, res) => {
     })
 }
 
+// list of restricted addresses
+const restrictedAdddressesCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
+let restrictedAddressesCache = null
+const restrictedAddressesLock = new Semaphore(1)
+const getRestrictedAddresses = async () => {
+    await restrictedAddressesLock.wait()
+    if (restrictedAddressesCache && Date.now() - restrictedAddressesCache.expires < restrictedAdddressesCacheTimeLimit) {
+        restrictedAddressesLock.release()
+        // console.log('ADDRESS restrictions from CACHE')
+        return restrictedAddressesCache.data
+    }
+
+    const list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
+    restrictedAddressesCache = {
+        expires: Date.now(),
+        data: list
+    }
+    restrictedAddressesLock.release()
+    // console.log('ADDRESS restrictions from NEW')
+    return list
+}
+
+// list of restricted objkts
+const restrictedObjectsCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
+let restrictedObjectsCache = null
+const restrictedObjectsLock = new Semaphore(1)
+const getRestrictedObjkts = async () => {
+    await restrictedObjectsLock.wait()
+    if (restrictedObjectsCache && Date.now() - restrictedObjectsCache.expires < restrictedObjectsCacheTimeLimit) {
+        restrictedObjectsLock.release()
+        // console.log('OBJKT restrictions from CACHE')
+        return restrictedObjectsCache.data
+    }
+
+    const list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
+    restrictedObjectsCache = {
+        expires: Date.now(),
+        data: list
+    }
+    restrictedObjectsLock.release()
+    // console.log('OBJKT restrictions from NEW')
+    return list
+}
+
 //getObjkts()
 //testSwaps()
 //getFeed(1)
@@ -322,28 +365,38 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
-app.post('/featured', async (req, res) => {
-    /*     
-        var counter = req.query.counter
-        var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
-        const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
-        if (max_time != null & max_time > now_time_qt) {
-            max_time = null
-        } 
-    */
-    await getFeed(req.body.counter, res, true)
-})
+// used for very simple caching of the feed
+const feedCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
+const feedCache = {}
+const feedLocks = {}
 
-app.post('/feed', async (req, res) => {
-    /*     
-        var counter = req.query.counter
-        var max_time = req.query.hasOwnProperty('time') ? customFloor(req.query.time, ONE_MINUTE_MILLIS) : null
-        const now_time_qt = customFloor(Date.now(), ONE_MINUTE_MILLIS)
-        if (max_time != null & max_time > now_time_qt) {
-            max_time = null
-        } 
-    */
-    await getFeed(req.body.counter, res, false)
+const getFeedLock = (key) => {
+    if (!feedLocks[key]) {
+        feedLocks[key] = new Semaphore(1)
+    }
+    return feedLocks[key]
+}
+
+app.post('/feed|/featured', async (req, res) => {
+    const feedOffset = req.body.counter || 0
+    const isFeatured = req.path === '/featured'
+    const lockKey = `${feedOffset}-${isFeatured ? 'featured' : ''}`
+
+    await getFeedLock(lockKey).wait()
+    if (feedCache[lockKey] && Date.now() - feedCache[lockKey].expires < feedCacheTimeLimit) {
+        getFeedLock(lockKey).release()
+        // console.log('Feed from CACHE')
+        return res.json({ result: feedCache[lockKey].data })
+    }
+
+    const aux_arr = await getFeed(feedOffset, isFeatured)
+    feedCache[lockKey] = {
+        expires: Date.now(),
+        data: aux_arr
+    }
+    getFeedLock(lockKey).release()
+    // console.log('Feed from NEW')
+    return res.json({ result: aux_arr })
 })
 
 app.post('/random', async (req, res) => {
@@ -353,7 +406,7 @@ app.post('/random', async (req, res) => {
 app.post('/tz', async (req, res) => {
 
     // list of restricted addresses
-    var list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
+    var list = await getRestrictedAddresses()
 
     list.includes(req.body.tz)
         ?
@@ -366,7 +419,7 @@ app.post('/tz', async (req, res) => {
 app.post('/objkt', async (req, res) => {
 
     // list of restricted objkts
-    var list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
+    var list = await getRestrictedObjkts()
 
     list.includes(parseInt(req.body.objkt_id))
         ?
@@ -384,9 +437,10 @@ app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
 
-const testhdao = async () =>  await hDAOFeed(parseInt(0))
+// const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-//app.listen(3001)
-module.exports.handler = serverless(app)
+app.listen(3001)
+console.log('SERVER RUNNING ON localhost:3001')
+// module.exports.handler = serverless(app)
 
