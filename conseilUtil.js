@@ -117,7 +117,7 @@ const getArtisticOutputForAddress = async (address) => {
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'parameters_entrypoints', conseiljs.ConseilOperator.EQ, ['mint_OBJKT'])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(mintOperationQuery, 'source', conseiljs.ConseilOperator.EQ, [address])
     mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(mintOperationQuery, 'block_level', conseiljs.ConseilSortDirection.DESC)
-    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 30_000) // TODO: this is hardwired and will not work for highly productive artists
+    mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(mintOperationQuery, 256) // TODO: this is hardwired and will not work for highly productive artists
 
     const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
         { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
