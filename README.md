@@ -15,6 +15,14 @@ npm i
 npm start
 ```
 
+### Nodemon
+
+```bash
+nodemon dev.js
+```
+
+### Enpoints
+
 ```
 POST /feed :counter
 POST /tz :tz
