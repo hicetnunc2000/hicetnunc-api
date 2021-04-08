@@ -15,122 +15,20 @@ const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(
 
 const getIpfsHash = async (ipfsHash) => {
     return await axios.get('https://cloudflare-ipfs.com/ipfs/' + ipfsHash).then(res => res.data)
-    /*    const nftDetailJson = await nftDetails.json();
-   
-       const nftName = nftDetailJson.name;
-       const nftDescription = nftDetailJson.description;
-       const nftCreators = nftDetailJson.creators.join(', ');
-       const nftArtifact = `https://cloudflare-ipfs.com/ipfs/${nftDetailJson.formats[0].uri.toString().slice(7)}`;
-       const nftArtifactType = nftDetailJson.formats[0].mimeType.toString();
-   
-       return { name: nftName, description: nftDescription, creators: nftCreators, artifactUrl: nftArtifact, artifactType: nftArtifactType }; */
-}
-const getObjkts = async () => {
-    return await axios.get(`https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens`).then(res => res.data)
 }
 
-const getTokenHolders = async (tk_id) => {
-    return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + tk_id).then(res => res.data)
-}
-
-const getTokenHoldersArr = async (arr) => {
-
-    return await arr.map(async e => await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data))
-    /*     await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + arr[0]).then(res => console.log(res.data))
-     *//*     var result = arr.map(async e => {
-return await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + e).then(res => res.data)
-})
- 
-console.log(result) */
-}
 
 const owners = async (obj) => {
     var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
     var values_arr = (_.values(owners))
     obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? values_arr.filter(e => parseInt(e) > 0).reduce(reducer) : 0
     obj.owners = owners
-    // console.log(obj)
-    //obj.total_amount = (values_arr.map(e => parseInt(e))).reduce(reducer)
     return obj
-}
-
-const totalAmountIntegral = async (obj) => {
-    var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
-    // console.log(owners)
-    var values_arr = (_.values(owners))
-    obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? (values_arr.filter(e => parseInt(e))) : 0
-
-    obj.owners = owners
-    return obj
-}
-
-const objktAmount = async (arr) => {
-    return await arr.map(e => totalAmountIntegral(e))
-    //console.log(await getTokenHoldersArr(arr.map(e => _.values(e.token_id)[0])))
-}
-
-const objktOwners = async (arr) => {
-    return await arr.map(e => totalAmountIntegral(e))
-}
-
-
-const getObjktLedger = async () => await axios.get('https://better-call.dev/v1/bigmap/mainnet/511/keys?size=6500').then(res => res.data.map(e => ({ amount: parseInt(e.data.value.value), tz: e.data.key.children[0].value, tk_id: parseInt(e.data.key.children[1].value) })))
-const gethDAOLedger = async (counter) => await axios.get('https://api.better-call.dev/v1/bigmap/mainnet/519/keys?size=10&offset=' + counter * 10).then(res => res.data.map(e => {
-    return { token_id: parseInt(e.data.key.value), hDAO_balance: parseInt(e.data.value.children[0].value) }
-}))
-
-//gethDAOLedger()
-
-
-const getSwaps = async () => {
-    return await axios.get(`https://api.better-call.dev/v1/bigmap/mainnet/523/keys?size=6000`).then(res => {
-        return (res.data).map(e => {
-            var obj = {}
-
-            obj['swap_id'] = e.data.key.value
-            e.data.value != null ? e.data.value.children.map(e => obj[e.name] = e.value) : null
-            return obj
-        })
-    })
-}
-
-const merge = (a, b) => {
-    a.forEach((e1) => {
-        b.forEach((e2) => {
-            if (e1.token_id === e2.tk_id) {
-                _.assign(e1, e2)
-            }
-        })
-    })
-    return a
-}
-
-const mergeSwaps = (arr, swaps) => {
-    arr.forEach((e1) => {
-
-        e1.swaps = []
-
-        swaps.forEach((e2) => {
-            if (parseInt(e1.token_id) === parseInt(e2.objkt_id)) {
-                e1.swaps.push(e2)
-            }
-        })
-    })
-    return arr
 }
 
 const desc = arr => _.sortBy(arr, e => parseInt(e.objectId)).reverse()
 const offset = (arr, set) => arr.slice(set * 30, set * 30 + 30)
 
-const filter = (data, tz) => _.filter(data, (e) => {
-    if (e.token_info != undefined) {
-        return e.token_info.creators[0] === tz
-    }
-})
-
-const filterTz = (data, tz) => _.filter(data, { tz: tz })
-
-const test = async () => console.log(desc(await getObjkts()))
 
 const customFloor = function (value, roundTo) {
     return Math.floor(value / roundTo) * roundTo;
@@ -144,14 +42,11 @@ const randomFeed = async (counter, res) => {
     feed = await feed.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
         e.token_id = parseInt(e.objectId)
-        // console.log(e)
         return e
     })
     var promise = Promise.all(feed.map(e => e))
     promise.then(async (results) => {
         var aux_arr = results.map(e => e)
-        //res.set('Cache-Control', `public, max-age=${cache_time}`)
-        // console.log(aux_arr)
         res.json({ result: aux_arr })
     })
 }
@@ -195,8 +90,6 @@ const getFeed = async (counter, featured) => {
         return aux_arr
     })
 }
-
-const filterObjkts = (arr, id_arr) => _.filter(arr, { token_id: tk.id })
 
 const getTzLedger = async (tz, res) => {
     /*     var ledger = desc(await getObjktLedger())
@@ -258,8 +151,6 @@ const getTzLedger = async (tz, res) => {
             hdao: hdao
         })
     })
-
-    //return tzLedger
 }
 
 const getObjktById = async (id, res) => {
@@ -270,20 +161,6 @@ const getObjktById = async (id, res) => {
     console.log(objkt)
 
     return objkt
-    //res.json({ result : objkt })
-    //var objkts = await getObjkts()
-    //var swaps = await getSwaps()
-    //res.json({ result : mergeSwaps([objkt], swaps)[0] })
-    //console.log(_.filter(mergeSwaps(objkts, swaps), {token_id : id}))
-    //   var arr = await objktOwners(_.filter(mergeSwaps(objkts, swaps), {token_id : id}))
-    //   var promise = Promise.all(arr.map(e => e))
-
-    /*     promise.then((results) => {
-            var aux_arr = results.map(e => e)
-            console.log(aux_arr)
-            res.json({ result : aux_arr })
-        }) */
-    //https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=842
 }
 
 const mergehDAO = async (obj) => {
@@ -348,17 +225,8 @@ const getRestrictedObjkts = async () => {
         data: list
     }
     restrictedObjectsLock.release()
-    // console.log('OBJKT restrictions from NEW')
     return list
 }
-
-//getObjkts()
-//testSwaps()
-//getFeed(1)
-//getTzLedger('tz1UBZUkXpKGhYsP5KtzDNqLLchwF4uHrGjw')
-//getObjktById(15306)
-//const test2 = async () => console.log(await getObjktLedger())
-//test2()
 
 const app = express()
 
