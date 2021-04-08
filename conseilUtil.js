@@ -463,7 +463,7 @@ const getFeaturedArtisticUniverse = async(max_time) => {
     thresholdHdao = Math.min(1_000_000, Math.max(100_000 * hdaoPerTez, 10_000))
 
     return artisticUniverse.filter(function (o) {
-        return (((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > thresholdHdao) || (mintsPerCreator[o.minter] <= 1)
+        return (((hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1)) > thresholdHdao)
     })
 }
 
