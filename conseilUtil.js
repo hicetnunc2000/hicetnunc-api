@@ -9,7 +9,6 @@ conseiljs.registerLogger(logger)
 conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
-const tezosNode = ''
 const mainnet = require('./config').networkConfig
 
 
@@ -227,12 +226,10 @@ const gethDAOPerTez = async() => {
 
 const getKolibriPerTez = async() => {
     const tezBalance = await(getTezBalanceForAddress(mainnet.kolibriSwap))
-    //console.log("Tez balance", tezBalance)
     var kolibriBalance = await(getTokenBalance(mainnet.kolibriLedger, mainnet.kolibriSwap))
+
+    // TODO: Find a better way to get the balance, this is FA1.2, mike?
     kolibriBalance = parseInt(kolibriBalance.replace("Pair {} ", "")) / (10**((18 - 6)))
-    //console.log(kolibriBalance)
-    //console.log(typeof(kolibriBalance))
-    //console.log("Kol balance", kolibriBalance)
     return kolibriBalance / tezBalance
 }
 
@@ -470,11 +467,7 @@ const getFeaturedArtisticUniverse = async(max_time) => {
 const getRecommendedCurateDefault = async() => {
     hdaoPerTez = await gethDAOPerTez()
     kolPerTez = await getKolibriPerTez()
-    //console.log("hdaoPerTez", hdaoPerTez)
-    //console.log("kolPerTez", kolPerTez)
     hdaoPerKol = hdaoPerTez / kolPerTez
-    //console.log("hdaoPerKol", hdaoPerKol)
-
     //Minimum of $0.1, 0.1 hDAO, and 0.1tez, in hDAO
     return Math.floor(Math.min(hdaoPerKol * 0.1, 0.1, 0.1 * hdaoPerTez) * 1_000_000)
 }
