@@ -21,7 +21,7 @@ const getIpfsHash = async (ipfsHash) => {
 
 
 const owners = async (obj) => {
-    var owners = await axios.get('https://api.better-call.dev/v1/contract/mainnet/KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton/tokens/holders?token_id=' + obj.token_id).then(res => res.data)
+    var owners = await conseilUtil.getObjektOwners(obj.token_id)
     var values_arr = (_.values(owners))
     obj.total_amount = (values_arr.map(e => parseInt(e))).length > 0 ? values_arr.filter(e => parseInt(e) > 0).reduce(reducer) : 0
     obj.owners = owners
