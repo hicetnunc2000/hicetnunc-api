@@ -261,6 +261,33 @@ const gethDaoBalances = async () => {
 
 }
 
+const getObjektOwners = async (objekt_id) => {
+    let objektBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery();
+    objektBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(objektBalanceQuery, 'key', 'value');
+    objektBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(objektBalanceQuery, 'big_map_id', conseiljs.ConseilOperator.EQ, [mainnet.nftLedger])
+    objektBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(objektBalanceQuery, 'key', conseiljs.ConseilOperator.ENDSWITH, [` ${objekt_id}`], false)
+    objektBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(objektBalanceQuery, 'value', conseiljs.ConseilOperator.EQ, [0], true)
+    objektBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(objektBalanceQuery, 500_000)
+
+    let objektMap = {}
+
+    try {
+        const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData({ url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' }, 'mainnet', 'big_map_contents', objektBalanceQuery);
+        
+
+        balanceResult.forEach(row => {
+            objektMap[conseiljs.TezosMessageUtils.readAddress(row['key'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1'))] = row['value']
+        })
+        //#balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+    } catch (error) {
+        console.log(`getObjektOwners failed for ${JSON.stringify(objektBalanceQuery)} with ${error}`)
+    }
+
+
+    return objektMap
+
+}
+
 const getObjektMintingsLastWeek = async () => {
     var d = new Date();
     d.setDate(d.getDate()-5);
@@ -538,5 +565,6 @@ module.exports = {
     getArtisticUniverse,
     getFeaturedArtisticUniverse,
     hDAOFeed,
-    getRecommendedCurateDefault
+    getRecommendedCurateDefault,
+    getObjektOwners
 }
