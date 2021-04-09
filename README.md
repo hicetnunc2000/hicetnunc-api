@@ -21,3 +21,11 @@ POST /tz :tz
 POST /objkt :objkt_id
 POST /hdao :counter
 ```
+
+## API documentation
+
+Swagger docs generated using [swagger-autogen](https://github.com/davibaltar/swagger-autogen). These allow you to test and view the API responses.
+
+```
+GET /doc
+```
