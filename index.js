@@ -5,6 +5,8 @@ const cors = require('cors')
 const _ = require('lodash')
 const conseilUtil = require('./conseilUtil')
 const { random } = require('lodash')
+const swaggerUi = require('swagger-ui-express')
+const swaggerFile = require('./swagger-output.json')
 
 const BURN_ADDRESS = 'tz1burnburnburnburnburnburnburjAYjjX'
 
@@ -246,6 +248,66 @@ const getFeedLock = (key) => {
 }
 
 app.post('/feed|/featured', async (req, res) => {
+    /*  #swagger.start
+        #wagger.auto = false
+        #swagger.path = '/feed/{featured}'
+        #swagger.method = 'post'        
+        #swagger.summary = 'Main feed'
+        #swagger.description = 'Endpoint used to return the most recently minted OBJKTs. 
+            Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.
+            Use of the optional `featured` path parameter will apply a different filter to the
+            feed.'
+        #swagger.parameters['featured'] = {
+            in: 'path',
+            type: 'string',
+            description: 'Applies a filter to the results - returning no more than 1 item per minter,
+                including only those swapped for less than 0.1 tez and that haven\'t been updated with 
+                lots of hDAO.',
+            required: false,
+            schema: 'featured'
+        }
+        #swagger.parameters['counter'] = {
+            in: 'body',
+            description: 'Pagination number. Default is 0',
+            required: false,
+            type: 'number',
+            schema: { "counter": 0 }
+        }
+        #swagger.responses[200] = {
+            schema: {
+                "result": [
+                    { $ref: "#/definitions/objkt" }
+                ]
+            }
+        }
+        #swagger.end
+    */
+
+    /*  #swagger.start
+        #swagger.auto = false
+        #swagger.path = '/feed/featured'
+        #swagger.method = 'post'        
+        #swagger.summary = 'Main feed (cached)'
+        #swagger.description = 'Endpoint used to return a featured set of recently minted OBJKTs, 
+            no more than 1 item per minter, less than 0.1 tez and that hasn't been updated with 
+            lots of hDAO. Data is returned 30 at a time, and can be paginated. Total results are 
+            limited to 2500.'
+        #swagger.parameters['counter'] = {
+            in: 'body',
+            description: 'Pagination number. Default is 0',
+            required: false,
+            type: 'number',
+            schema: { "counter": 0 }
+        }
+        #swagger.responses[200] = {
+            schema: {
+                "result": [
+                    { $ref: "#/definitions/objkt" }
+                ]
+            }
+        }
+        #swagger.end
+    */
     const feedOffset = req.body.counter || 0
     const isFeatured = req.path === '/featured'
     const lockKey = `${feedOffset}-${isFeatured ? 'featured' : ''}`
@@ -268,6 +330,9 @@ app.post('/feed|/featured', async (req, res) => {
 })
 
 app.post('/random', async (req, res) => {
+    /* #swagger.summary = 'Random OBJKTs'
+       #swagger.description = 'Endpoint used to return an array of a random set of OBJKTs.'
+    */
     await randomFeed(parseInt(req.body.counter), res)
 })
 
@@ -285,6 +350,9 @@ app.post('/tz', async (req, res) => {
 })
 
 app.post('/objkt', async (req, res) => {
+    /* #swagger.summary = 'OBJKT details'
+       #swagger.description = 'Endpoint used to return information about an OBJKT.'
+    */
 
     // list of restricted objkts
     var list = await getRestrictedObjkts()
@@ -309,7 +377,12 @@ app.post('/hdao', async (req, res) => {
 // const testhdao = async () =>  await hDAOFeed(parseInt(0))
 //testhdao()
 
-//app.listen(3001)
+//generate swagger docs endpoint
+app.use(express.json())
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile))
+
+app.listen(3001)
 console.log('SERVER RUNNING ON localhost:3001')
-module.exports.handler = serverless(app)
+console.log('API documentation: http://localhost:3001/doc')
+//module.exports.handler = serverless(app)
 
