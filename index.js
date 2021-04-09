@@ -261,7 +261,7 @@ app.post('/feed|/featured', async (req, res) => {
             in: 'path',
             type: 'string',
             description: 'Applies a filter to the results - returning no more than 1 item per minter,
-                including only those swapped for less than 0.1 tez and that haven\'t been updated with 
+                including only those swapped for less than 0.1 tez and that haven\'t been updated with
                 lots of hDAO.',
             required: false,
             schema: 'featured'
@@ -356,8 +356,8 @@ app.post('/hdao', async (req, res) => {
 app.use(express.json())
 app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile))
 
-app.listen(3001)
+//app.listen(3001)
 console.log('SERVER RUNNING ON localhost:3001')
 console.log('API documentation: http://localhost:3001/doc')
-//module.exports.handler = serverless(app)
+module.exports.handler = serverless(app)
 
