@@ -354,7 +354,13 @@ app.post('/hdao', async (req, res) => {
 
 //generate swagger docs endpoint
 app.use(express.json())
-app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile))
+var swaggerOptions = {
+    explorer: true,
+    defaultModelsExpandDepth: -1,
+    customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-newspaper.css',
+    customCss: '.swagger-ui .topbar { display: none } '
+  };
+app.use('/doc', swaggerUi.serve, swaggerUi.setup(swaggerFile, swaggerOptions))
 
 //app.listen(3001)
 console.log('SERVER RUNNING ON localhost:3001')
