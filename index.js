@@ -251,9 +251,9 @@ app.post('/feed|/featured', async (req, res) => {
     /*  #swagger.start
         #wagger.auto = false
         #swagger.path = '/feed/{featured}'
-        #swagger.method = 'post'        
+        #swagger.method = 'post'
         #swagger.summary = 'Main feed'
-        #swagger.description = 'Endpoint used to return the most recently minted OBJKTs. 
+        #swagger.description = 'Endpoint used to return the most recently minted OBJKTs.
             Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.
             Use of the optional `featured` path parameter will apply a different filter to the
             feed.'
@@ -283,31 +283,6 @@ app.post('/feed|/featured', async (req, res) => {
         #swagger.end
     */
 
-    /*  #swagger.start
-        #swagger.auto = false
-        #swagger.path = '/feed/featured'
-        #swagger.method = 'post'        
-        #swagger.summary = 'Main feed (cached)'
-        #swagger.description = 'Endpoint used to return a featured set of recently minted OBJKTs, 
-            no more than 1 item per minter, less than 0.1 tez and that hasn't been updated with 
-            lots of hDAO. Data is returned 30 at a time, and can be paginated. Total results are 
-            limited to 2500.'
-        #swagger.parameters['counter'] = {
-            in: 'body',
-            description: 'Pagination number. Default is 0',
-            required: false,
-            type: 'number',
-            schema: { "counter": 0 }
-        }
-        #swagger.responses[200] = {
-            schema: {
-                "result": [
-                    { $ref: "#/definitions/objkt" }
-                ]
-            }
-        }
-        #swagger.end
-    */
     const feedOffset = req.body.counter || 0
     const isFeatured = req.path === '/featured'
     const lockKey = `${feedOffset}-${isFeatured ? 'featured' : ''}`
