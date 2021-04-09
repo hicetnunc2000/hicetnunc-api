@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Hic et Nunc API",
-    "description": "This API is used as the backend for https://hicetnunc.xyz. It consumes information from a number of Tezos blockchain information providers, including https://cryptonomic.github.io/ConseilJS/  and https://better-call.dev/docs, along with objkt metadata sourced from IPFS",
+    "description": "This API is used as the backend for https://hicetnunc.xyz. It consumes information from a number of Tezos blockchain information providers, including https://cryptonomic.github.io/ConseilJS/ and https://better-call.dev/docs, along with objkt metadata sourced from IPFS",
     "version": "1.0.0"
   },
   "host": "localhost:3001",
@@ -18,14 +18,14 @@
       "post": {
         "tags": [],
         "summary": "Main feed",
-        "description": "Endpoint used to return the most recently minted OBJKTs.   Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.  Use of the optional `featured` path parameter will apply a different filter to the  feed.",
+        "description": "Endpoint used to return the most recently minted OBJKTs.  Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.  Use of the optional `featured` path parameter will apply a different filter to the  feed.",
         "parameters": [
           {
             "name": "featured",
             "in": "path",
             "required": false,
             "type": "string",
-            "description": "Applies a filter to the results - returning no more than 1 item per minter,  including only those swapped for less than 0.1 tez and that haven't been updated with   lots of hDAO.",
+            "description": "Applies a filter to the results - returning no more than 1 item per minter,  including only those swapped for less than 0.1 tez and that haven't been updated with  lots of hDAO.",
             "schema": {
               "type": "string",
               "example": "featured"
@@ -165,50 +165,6 @@
           }
         ],
         "responses": {}
-      }
-    },
-    "/feed/featured": {
-      "post": {
-        "tags": [],
-        "summary": "Main feed (cached)",
-        "description": "Endpoint used to return a featured set of recently minted OBJKTs,   no more than 1 item per minter, less than 0.1 tez and that hasn",
-        "parameters": [
-          {
-            "name": "counter",
-            "in": "body",
-            "description": "Pagination number. Default is 0",
-            "required": false,
-            "type": "number",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "counter": {
-                  "type": "number",
-                  "example": 0
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "schema": {
-              "type": "object",
-              "properties": {
-                "result": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/objkt"
-                  }
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            },
-            "description": "OK"
-          }
-        }
       }
     }
   },
