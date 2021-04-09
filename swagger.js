@@ -6,7 +6,7 @@ const doc = {
       description: "This API is used as the backend for https://hicetnunc.xyz. It consumes information from a number of Tezos blockchain information providers, including https://cryptonomic.github.io/ConseilJS/ and https://better-call.dev/docs, along with objkt metadata sourced from IPFS"
   },
   host: "localhost:3001",
-  schemes: ['https'],
+  schemes: ['https','http'],
   definitions: {
     objkt: {
       "objectId": "24043",
