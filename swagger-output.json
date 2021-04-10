@@ -19,7 +19,7 @@
       "post": {
         "tags": [],
         "summary": "Main feed",
-        "description": "Endpoint used to return the most recently minted OBJKTs.  Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.  Use of the optional `featured` path parameter will apply a different filter to the  feed.",
+        "description": "Endpoint used to return the most recently minted OBJKTs. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500. Use of the optional `featured` path parameter will apply a different filter to the feed.",
         "parameters": [
           {
             "name": "featured",
@@ -68,6 +68,20 @@
             "description": "OK"
           }
         }
+      },
+      "get": {
+        "tags": [],
+        "summary": "Main feed",
+        "description": "",
+        "parameters": [
+          {
+            "name": "featured",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {}
       }
     },
     "/random": {
@@ -91,12 +105,26 @@
           }
         ],
         "responses": {}
+      },
+      "get": {
+        "tags": [],
+        "summary": "Random OBJKTs",
+        "description": "Endpoint used to return an array of a random set of OBJKTs.",
+        "parameters": [
+          {
+            "name": "counter",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {}
       }
     },
     "/tz": {
       "post": {
         "tags": [],
-        "description": "",
+        "summary": "Account information",
+        "description": "Endpoint used to return information about a wallet address. This  includes the OBJKTs that wallet created, those that it holds, and the amount of hDAO it  holds. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.",
         "parameters": [
           {
             "name": "obj",
@@ -113,13 +141,26 @@
           }
         ],
         "responses": {}
+      },
+      "get": {
+        "tags": [],
+        "summary": "Account information",
+        "description": "Endpoint used to return information about a wallet address. This  includes the OBJKTs that wallet created, those that it holds, and the amount of hDAO it  holds. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.",
+        "parameters": [
+          {
+            "name": "tz",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {}
       }
     },
     "/objkt": {
       "post": {
         "tags": [],
         "summary": "OBJKT details",
-        "description": "Endpoint used to return information about an OBJKT.",
+        "description": "Endpoint used to return detailed information about an OBJKT.",
         "parameters": [
           {
             "name": "obj",
@@ -136,11 +177,25 @@
           }
         ],
         "responses": {}
+      },
+      "get": {
+        "tags": [],
+        "summary": "OBJKT details",
+        "description": "Endpoint used to return detailed information about an OBJKT.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {}
       }
     },
     "/recommend_curate": {
       "get": {
         "tags": [],
+        "summary": "hDAO minimum spend recommendation",
         "description": "",
         "parameters": [],
         "responses": {}
@@ -149,7 +204,8 @@
     "/hdao": {
       "post": {
         "tags": [],
-        "description": "",
+        "summary": "hDAO feed",
+        "description": "Endpoint used to return the list of OBJKTs with hDAO in descending  order of how many hDAO have been spend on them. Data is returned 30 at a time, and can be  paginated. Total results are limited to 30000.",
         "parameters": [
           {
             "name": "obj",
@@ -163,6 +219,19 @@
                 }
               }
             }
+          }
+        ],
+        "responses": {}
+      },
+      "get": {
+        "tags": [],
+        "summary": "hDAO feed",
+        "description": "Endpoint used to return the list of OBJKTs with hDAO in descending  order of how many hDAO have been spend on them. Data is returned 30 at a time, and can be  paginated. Total results are limited to 30000.",
+        "parameters": [
+          {
+            "name": "counter",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {}
