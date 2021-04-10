@@ -232,13 +232,12 @@ app.get('/random', async (req, res) => {
 const get_tz = async(tz, res) => {
     // list of restricted addresses
     var list = await getRestrictedAddresses()
-
     res.set('Cache-Control', `public, max-age=120`)
-    list.includes(req.body.tz)
+    list.includes(tz)
         ?
         res.json({ result: [] })
         :
-        await getTzLedger(req.body.tz, res)
+        await getTzLedger(tz, res)
 }
 
 app.post('/tz', async (req, res) => {
