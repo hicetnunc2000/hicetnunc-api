@@ -29,3 +29,9 @@ Swagger docs generated using [swagger-autogen](https://github.com/davibaltar/swa
 ```
 GET /doc
 ```
+
+If you add or amend the API endpoints, please also update the swagger definitions, and regenerate the docs:
+
+```
+npm run swagger-autogen
+```
