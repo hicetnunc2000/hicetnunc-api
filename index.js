@@ -11,7 +11,6 @@ const swaggerFile = require('./swagger-output.json')
 const BURN_ADDRESS = 'tz1burnburnburnburnburnburnburjAYjjX'
 
 require('dotenv').config()
-const { Semaphore } =  require('prex')
 
 const reducer = (accumulator, currentValue) => parseInt(accumulator) + parseInt(currentValue)
 
@@ -53,43 +52,38 @@ const randomFeed = async (counter, res) => {
     })
 }
 
-const getFeed = async (counter, featured) => {
-    /*     const now_time = Date.now()
-        const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
-        max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
-     */
+const getFeed = async (res, counter, featured, max_time) => {
+    const now_time = Date.now()
+    const immutable = (typeof max_time !== 'undefined') && (max_time < now_time)
+    max_time = (typeof max_time !== 'undefined') ? max_time : customFloor(now_time, ONE_MINUTE_MILLIS)
+    
     console.log(`feed, featured: ${featured}`)
     var arr
     if (featured) {
-        arr = await conseilUtil.getFeaturedArtisticUniverse(0)
+        arr = await conseilUtil.getFeaturedArtisticUniverse(0, max_time)
     } else {
-        arr = await conseilUtil.getArtisticUniverse(0)
+        arr = await conseilUtil.getArtisticUniverse(0, max_time)
     }
 
     var feed = offset(desc(arr), counter)
-    // console.log(feed)
     feed = await feed.map(async e => {
         e.token_info = await getIpfsHash(e.ipfsHash)
         e.token_id = parseInt(e.objectId)
         console.log(e)
         return e
     })
-    //console.log(feed)
-    /*    var cache_time
-       if (immutable) {
-           cache_time = 60 * 10
-       }
-       else {
-           cache_time = (int)(((max_time + ONE_MINUTE_MILLIS) - now_time) / 1000)
-       } */
+    var cache_time
+    if (immutable) {
+        cache_time = 60 * 10
+    }
+    else {
+        cache_time = Math.floor(((max_time + ONE_MINUTE_MILLIS) - now_time) / 1000)
+    }
     var promise = Promise.all(feed.map(e => e))
     return promise.then(async (results) => {
         var aux_arr = results.map(e => e)
-
-        //res.set('Cache-Control', `public, max-age=${cache_time}`)
-
-        // console.log(aux_arr)
-        return aux_arr
+        res.set('Cache-Control', `public, max-age=${cache_time}`)
+        res.json({ result: aux_arr })
     })
 }
 
@@ -146,6 +140,7 @@ const getTzLedger = async (tz, res) => {
     promise.then(async results => {
         var result = results.map(e => e)
         console.log(result)
+
         res.json({
             result: _.uniqBy(result, (e) => {
                 return e.token_id
@@ -181,6 +176,7 @@ const hDAOFeed = async (counter, res) => {
     promise.then(results => {
         var result = results.map(e => e)
         console.log(result)
+        res.set('Cache-Control', `public, max-age=300`)
         res.json({ result: result })
     }).catch(e => {
         res.status(500).json({ error: 'downstream API failure' })
@@ -188,45 +184,14 @@ const hDAOFeed = async (counter, res) => {
 }
 
 // list of restricted addresses
-const restrictedAdddressesCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
-let restrictedAddressesCache = null
-const restrictedAddressesLock = new Semaphore(1)
 const getRestrictedAddresses = async () => {
-    await restrictedAddressesLock.wait()
-    if (restrictedAddressesCache && Date.now() - restrictedAddressesCache.expires < restrictedAdddressesCacheTimeLimit) {
-        restrictedAddressesLock.release()
-        // console.log('ADDRESS restrictions from CACHE')
-        return restrictedAddressesCache.data
-    }
-
     const list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
-    restrictedAddressesCache = {
-        expires: Date.now(),
-        data: list
-    }
-    restrictedAddressesLock.release()
-    // console.log('ADDRESS restrictions from NEW')
     return list
 }
 
 // list of restricted objkts
-const restrictedObjectsCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
-let restrictedObjectsCache = null
-const restrictedObjectsLock = new Semaphore(1)
 const getRestrictedObjkts = async () => {
-    await restrictedObjectsLock.wait()
-    if (restrictedObjectsCache && Date.now() - restrictedObjectsCache.expires < restrictedObjectsCacheTimeLimit) {
-        restrictedObjectsLock.release()
-        // console.log('OBJKT restrictions from CACHE')
-        return restrictedObjectsCache.data
-    }
-
     const list = await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
-    restrictedObjectsCache = {
-        expires: Date.now(),
-        data: list
-    }
-    restrictedObjectsLock.release()
     return list
 }
 
@@ -235,16 +200,11 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
-// used for very simple caching of the feed
-const feedCacheTimeLimit = ONE_MINUTE_MILLIS // the blockchain updates about once a minute
-const feedCache = {}
-const feedLocks = {}
+const feedfeatured = async(req, res) => {
+    const feedOffset = req.body.counter || 0
+    const isFeatured = req.path === '/featured'
 
-const getFeedLock = (key) => {
-    if (!feedLocks[key]) {
-        feedLocks[key] = new Semaphore(1)
-    }
-    return feedLocks[key]
+    await getFeed(res, feedOffset, isFeatured, req.body.max_time)
 }
 
 app.post('/feed|/featured', async (req, res) => {
@@ -282,62 +242,78 @@ app.post('/feed|/featured', async (req, res) => {
         }
         #swagger.end
     */
-
-    const feedOffset = req.body.counter || 0
-    const isFeatured = req.path === '/featured'
-    const lockKey = `${feedOffset}-${isFeatured ? 'featured' : ''}`
-
-    await getFeedLock(lockKey).wait()
-    if (feedCache[lockKey] && Date.now() - feedCache[lockKey].expires < feedCacheTimeLimit) {
-        getFeedLock(lockKey).release()
-        // console.log('Feed from CACHE')
-        return res.json({ result: feedCache[lockKey].data })
-    }
-
-    const aux_arr = await getFeed(feedOffset, isFeatured)
-    feedCache[lockKey] = {
-        expires: Date.now(),
-        data: aux_arr
-    }
-    getFeedLock(lockKey).release()
-    // console.log('Feed from NEW')
-    return res.json({ result: aux_arr })
+    await feedfeatured(req, res)
 })
+
+app.get('/feed|/featured', async (req, res) => {
+    await feedfeatured(req, res)
+})
+
+
+// Random
 
 app.post('/random', async (req, res) => {
     /* #swagger.summary = 'Random OBJKTs'
        #swagger.description = 'Endpoint used to return an array of a random set of OBJKTs.'
     */
+    res.set('Cache-Control', `public, max-age=300`)
     await randomFeed(parseInt(req.body.counter), res)
 })
 
-app.post('/tz', async (req, res) => {
+app.get('/random', async (req, res) => {
+    res.set('Cache-Control', `public, max-age=300`)
+    await randomFeed(parseInt(req.query.counter), res)
+})
 
+
+// TZ
+
+const get_tz = async(tz, res) => {
     // list of restricted addresses
     var list = await getRestrictedAddresses()
-
-    list.includes(req.body.tz)
+    res.set('Cache-Control', `public, max-age=120`)
+    list.includes(tz)
         ?
         res.json({ result: [] })
         :
-        await getTzLedger(req.body.tz, res)
+        await getTzLedger(tz, res)
+}
 
+app.post('/tz', async (req, res) => {
+    await get_tz(req.body.tz, res)
 })
+app.get('/tz', async (req, res) => {
+    await get_tz(req.query.tz, res)
+})
+
+// OBJEKT
+
+const objkt = async(id, res) => {
+
+    // list of restricted objkts
+    var list = await getRestrictedObjkts()
+
+    res.set('Cache-Control', `public, max-age=120`)
+    list.includes(parseInt(id))
+        ?
+        res.json({ result: [] })
+        :
+        res.json({ result: await getObjktById(id) })
+}
 
 app.post('/objkt', async (req, res) => {
     /* #swagger.summary = 'OBJKT details'
        #swagger.description = 'Endpoint used to return information about an OBJKT.'
     */
+    await objkt(req.body.objkt_id, res)
 
-    // list of restricted objkts
-    var list = await getRestrictedObjkts()
-
-    list.includes(parseInt(req.body.objkt_id))
-        ?
-        res.json({ result: [] })
-        :
-        res.json({ result: await getObjktById(req.body.objkt_id) })
 })
+app.get('/objkt', async (req, res) => {
+    await objkt(req.query.id, res)
+})
+
+
+
 
 app.get('/recommend_curate', async (req, res) => {
     const amt = await conseilUtil.getRecommendedCurateDefault()
@@ -345,12 +321,15 @@ app.get('/recommend_curate', async (req, res) => {
     res.json({ amount: amt })
 })
 
+
+// HDAO
 app.post('/hdao', async (req, res) => {
     await hDAOFeed(parseInt(req.body.counter), res)
 })
 
-// const testhdao = async () =>  await hDAOFeed(parseInt(0))
-//testhdao()
+app.get('/hdao', async (req, res) => {
+    await hDAOFeed(parseInt(req.query.counter), res)
+})
 
 //generate swagger docs endpoint
 app.use(express.json())
