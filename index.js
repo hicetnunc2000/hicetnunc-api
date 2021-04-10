@@ -170,11 +170,11 @@ const hDAOFeed = async (counter, res) => {
     var set = _.orderBy(hDAO, ['hDAO_balance'], ['desc'])
     var objkts = await (offset(set, counter)).map(async e => await mergehDAO(e))
 
-    res.set('Cache-Control', `public, max-age=300`)
     var promise = Promise.all(objkts.map(e => e))
     promise.then(results => {
         var result = results.map(e => e)
         console.log(result)
+        res.set('Cache-Control', `public, max-age=300`)
         res.json({ result: result })
     }).catch(e => {
         res.status(500).json({ error: 'downstream API failure' })
@@ -216,23 +216,20 @@ app.get('/feed|/featured', async (req, res) => {
 
 // Random
 
-const rand = async(req, res) => {
+app.post('/random', async (req, res) => {
     res.set('Cache-Control', `public, max-age=300`)
     await randomFeed(parseInt(req.body.counter), res)
-}
-
-app.post('/random', async (req, res) => {
-    await rand(req, res)
 })
 
 app.get('/random', async (req, res) => {
-    await rand(req, res)
+    res.set('Cache-Control', `public, max-age=300`)
+    await randomFeed(parseInt(req.query.counter), res)
 })
 
 
 // TZ
 
-const tz = async(req, res) => {
+const get_tz = async(tz, res) => {
     // list of restricted addresses
     var list = await getRestrictedAddresses()
 
@@ -245,33 +242,33 @@ const tz = async(req, res) => {
 }
 
 app.post('/tz', async (req, res) => {
-    await tz(req, res)
+    await get_tz(req.body.tz, res)
 })
 app.get('/tz', async (req, res) => {
-    await tz(req, res)
+    await get_tz(req.query.tz, res)
 })
 
 // OBJEKT
 
-const objkt = async(req, res) => {
+const objkt = async(id, res) => {
 
     // list of restricted objkts
     var list = await getRestrictedObjkts()
 
     res.set('Cache-Control', `public, max-age=120`)
-    list.includes(parseInt(req.body.objkt_id))
+    list.includes(parseInt(id))
         ?
         res.json({ result: [] })
         :
-        res.json({ result: await getObjktById(req.body.objkt_id) })
+        res.json({ result: await getObjktById(id) })
 }
 
 app.post('/objkt', async (req, res) => {
-    await objkt(req, res)
+    await objkt(req.body.objkt_id, res)
 
 })
 app.get('/objkt', async (req, res) => {
-    await objkt(req, res)
+    await objkt(req.query.id, res)
 })
 
 
@@ -290,7 +287,7 @@ app.post('/hdao', async (req, res) => {
 })
 
 app.get('/hdao', async (req, res) => {
-    await hDAOFeed(parseInt(req.body.counter), res)
+    await hDAOFeed(parseInt(req.query.counter), res)
 })
 
 //app.listen(3001)
