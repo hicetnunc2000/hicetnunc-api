@@ -208,15 +208,12 @@ const feedfeatured = async(req, res) => {
 }
 
 app.post('/feed|/featured', async (req, res) => {
-    /*  #swagger.start
-        #wagger.auto = false
+    /*  
+        #swagger.start
         #swagger.path = '/feed/{featured}'
         #swagger.method = 'post'
         #swagger.summary = 'Main feed'
-        #swagger.description = 'Endpoint used to return the most recently minted OBJKTs.
-            Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.
-            Use of the optional `featured` path parameter will apply a different filter to the
-            feed.'
+        #swagger.description = 'Endpoint used to return the most recently minted OBJKTs. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500. Use of the optional `featured` path parameter will apply a different filter to the feed.'
         #swagger.parameters['featured'] = {
             in: 'path',
             type: 'string',
@@ -246,6 +243,13 @@ app.post('/feed|/featured', async (req, res) => {
 })
 
 app.get('/feed|/featured', async (req, res) => {
+    /*  
+        #swagger.start
+        #swagger.path = '/feed/{featured}'
+        #swagger.method = 'get'
+        #swagger.summary = 'Main feed (works in same way as `POST /feed`)'
+        #swagger.end
+    */
     await feedfeatured(req, res)
 })
 
@@ -261,6 +265,9 @@ app.post('/random', async (req, res) => {
 })
 
 app.get('/random', async (req, res) => {
+    /* #swagger.summary = 'Random OBJKTs'
+       #swagger.description = 'Endpoint used to return an array of a random set of OBJKTs. Works in same way as `POST /random`'
+    */
     res.set('Cache-Control', `public, max-age=300`)
     await randomFeed(parseInt(req.query.counter), res)
 })
@@ -280,9 +287,19 @@ const get_tz = async(tz, res) => {
 }
 
 app.post('/tz', async (req, res) => {
+    /* #swagger.summary = 'Account information'
+       #swagger.description = 'Endpoint used to return information about a wallet address. This
+       includes the OBJKTs that wallet created, those that it holds, and the amount of hDAO it
+       holds. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.'
+    */
     await get_tz(req.body.tz, res)
 })
 app.get('/tz', async (req, res) => {
+    /* #swagger.summary = 'Account information'
+       #swagger.description = 'Endpoint used to return information about a wallet address. This
+       includes the OBJKTs that wallet created, those that it holds, and the amount of hDAO it
+       holds. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.'
+    */
     await get_tz(req.query.tz, res)
 })
 
@@ -303,12 +320,15 @@ const objkt = async(id, res) => {
 
 app.post('/objkt', async (req, res) => {
     /* #swagger.summary = 'OBJKT details'
-       #swagger.description = 'Endpoint used to return information about an OBJKT.'
+       #swagger.description = 'Endpoint used to return detailed information about an OBJKT.'
     */
     await objkt(req.body.objkt_id, res)
 
 })
 app.get('/objkt', async (req, res) => {
+    /* #swagger.summary = 'OBJKT details'
+       #swagger.description = 'Endpoint used to return detailed information about an OBJKT.'
+    */
     await objkt(req.query.id, res)
 })
 
@@ -316,6 +336,11 @@ app.get('/objkt', async (req, res) => {
 
 
 app.get('/recommend_curate', async (req, res) => {
+    /* #swagger.summary = 'hDAO minimum spend recommendation'
+       #swagger.description = 'Endpoint determines the current swap prices between these currency pairs
+        (USD:hDAO, XTZ:hDAO), and it calculates the hDAO value of them. This value is returned if larger
+        than 0.1 hDAO, else 0.1 is returned. This data is cached for 300s.
+    */    
     const amt = await conseilUtil.getRecommendedCurateDefault()
     res.set('Cache-Control', `public, max-age=300`)
     res.json({ amount: amt })
@@ -324,10 +349,20 @@ app.get('/recommend_curate', async (req, res) => {
 
 // HDAO
 app.post('/hdao', async (req, res) => {
+    /* #swagger.summary = 'hDAO feed'
+       #swagger.description = 'Endpoint used to return the list of OBJKTs with hDAO in descending
+       order of how many hDAO have been spend on them. Data is returned 30 at a time, and can be
+       paginated. Total results are limited to 30000.'
+    */
     await hDAOFeed(parseInt(req.body.counter), res)
 })
 
 app.get('/hdao', async (req, res) => {
+    /* #swagger.summary = 'hDAO feed'
+       #swagger.description = 'Endpoint used to return the list of OBJKTs with hDAO in descending
+       order of how many hDAO have been spend on them. Data is returned 30 at a time, and can be
+       paginated. Total results are limited to 30000.'
+    */
     await hDAOFeed(parseInt(req.query.counter), res)
 })
 
