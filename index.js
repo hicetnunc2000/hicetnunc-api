@@ -58,9 +58,9 @@ const getFeed = async (res, counter, featured, max_time) => {
     console.log(`feed, featured: ${featured}`)
     var arr
     if (featured) {
-        arr = await conseilUtil.getFeaturedArtisticUniverse(0, max_time)
+        arr = await conseilUtil.getFeaturedArtisticUniverse(max_time)
     } else {
-        arr = await conseilUtil.getArtisticUniverse(0, max_time)
+        arr = await conseilUtil.getArtisticUniverse(max_time)
     }
 
     var feed = offset(desc(arr), counter)
