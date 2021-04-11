@@ -1,6 +1,8 @@
 'use strict'
 
 module.exports = {
+  burnAddress:
+    process.env.BURN_ADDRESS || 'tz1burnburnburnburnburnburnburjAYjjX',
   feedItemsPerPage: process.env.FEED_ITEMS_PER_PAGE || 30,
   networkConfig: {
     network: 'mainnet',
@@ -15,4 +17,5 @@ module.exports = {
     nftRoyaltiesMap: 522,
     daoLedger: 515,
   },
+  serverPort: 3001,
 }

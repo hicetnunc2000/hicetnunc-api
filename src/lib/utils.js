@@ -10,6 +10,8 @@ module.exports = {
   getIpfsHash,
   getObjktById,
   getObjktOwners,
+  getRestrictedAddresses,
+  getRestrictedObjkts,
   paginateFeed,
   sortFeed,
 }
@@ -18,7 +20,7 @@ async function getIpfsHash(ipfsHash) {
   return (await axios.get('https://cloudflare-ipfs.com/ipfs/' + ipfsHash)).data
 }
 
-async function getObjktById(id, res) {
+async function getObjktById(id) {
   const objkt = await conseil.getObjectById(id)
 
   objkt.token_id = objkt.objectId
@@ -42,6 +44,7 @@ async function getObjktOwners(objkt) {
         objkt.token_id
     )
   ).data
+
   const ownerCountList = _.values(owners)
 
   let total = 0
@@ -60,10 +63,28 @@ async function getObjktOwners(objkt) {
   }
 }
 
+async function getRestrictedAddresses() {
+  return (
+    await axios.get(
+      'https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json'
+    )
+  ).data
+}
+
+async function getRestrictedObjkts() {
+  return (
+    await axios.get(
+      'https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json'
+    )
+  ).data
+}
+
 function paginateFeed(feed, cursor) {
+  const pageCursor = cursor ? parseInt(cursor) : 0
+
   return feed.slice(
-    cursor * feedItemsPerPage,
-    cursor * feedItemsPerPage + feedItemsPerPage
+    pageCursor * feedItemsPerPage,
+    pageCursor * feedItemsPerPage + feedItemsPerPage
   )
 }
 

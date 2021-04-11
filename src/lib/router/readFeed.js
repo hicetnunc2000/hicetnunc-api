@@ -5,18 +5,22 @@ const conseil = require('conseil')
 const { getIpfsHash, paginateFeed, sortFeed } = require('utils')
 
 module.exports = async function readFeed(req, res) {
-  const rawFeed = await conseil.getArtisticUniverse(0)
-  const pageCursor = parseInt(req.body.counter)
-  const feed = paginateFeed(sortFeed(rawFeed), pageCursor)
+  const isFeatured = req.path === '/featured'
+  const pageCursor = req.body.counter
+  const fetchTime = req.feedFetchAt
+  const rawFeed = await (isFeatured
+    ? conseil.getFeaturedArtisticUniverse(fetchTime)
+    : conseil.getArtisticUniverse(fetchTime))
 
-  res.json({
-    result: await Promise.all(
-      feed.map(async (objkt) => {
-        objkt.token_info = await getIpfsHash(objkt.ipfsHash)
-        objkt.token_id = parseInt(objkt.objectId)
+  const paginatedFeed = paginateFeed(sortFeed(rawFeed), pageCursor)
+  const feed = await Promise.all(
+    paginatedFeed.map(async (objkt) => {
+      objkt.token_info = await getIpfsHash(objkt.ipfsHash)
+      objkt.token_id = parseInt(objkt.objectId)
 
-        return objkt
-      })
-    ),
-  })
+      return objkt
+    })
+  )
+
+  return res.json({ result: feed })
 }

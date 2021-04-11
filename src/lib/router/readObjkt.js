@@ -1,18 +1,13 @@
 'use strict'
 
-const axios = require('axios')
-const { getObjktById } = require('utils')
+const { getObjktById, getRestrictedObjkts } = require('utils')
 
 module.exports = async function readObjkt(req, res) {
-  const list = (
-    await axios.get(
-      'https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json'
-    )
-  ).data
-  const objktId = req.body.objkt_id
-  const tezosAddr = req.body.tz
+  const { objkt_id: objktId, tz: tezosAddr } = req.body
 
-  if (list.includes(tezosAddr)) {
+  const restrictedObjkts = await getRestrictedObjkts()
+
+  if (restrictedObjkts.includes(tezosAddr)) {
     return res.json({ result: [] })
   }
 

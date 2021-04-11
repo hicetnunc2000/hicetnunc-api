@@ -6,13 +6,13 @@ const conseil = require('conseil')
 const { getObjktById, paginateFeed } = require('utils')
 
 module.exports = async function readHdaoFeed(req, res) {
-  let rawFeed = await conseil.hDAOFeed()
-
-  rawFeed = _.orderBy(rawFeed, ['hDAO_balance'], ['desc'])
+  const rawFeed = await conseil.hDAOFeed()
+  const sortedFeed = _.orderBy(rawFeed, ['hDAO_balance'], ['desc'])
+  const paginatedFeed = paginateFeed(sortedFeed, 0)
 
   res.json({
     result: await Promise.all(
-      paginateFeed(rawFeed, 0).map(async (objkt) => await _mergeHdao(objkt))
+      paginatedFeed.map(async (objkt) => await _mergeHdao(objkt))
     ),
   })
 }

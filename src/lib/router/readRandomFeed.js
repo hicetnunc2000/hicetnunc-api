@@ -7,7 +7,7 @@ const { getIpfsHash, paginateFeed } = require('utils')
 
 module.exports = async function readRandomFeed(req, res) {
   const rawFeed = await conseil.getArtisticUniverse(0)
-  const pageCursor = parseInt(req.body.cursor)
+  const pageCursor = req.body.cursor
   const feed = paginateFeed(_.shuffle(rawFeed), pageCursor)
 
   res.json({

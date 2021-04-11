@@ -1,6 +1,7 @@
 const conseiljs = require('conseiljs')
 const fetch = require('node-fetch')
 const log = require('loglevel')
+const BigNumber = require('bignumber.js')
 
 const logger = log.getLogger('conseiljs')
 logger.setLevel('error', false)
@@ -8,9 +9,7 @@ conseiljs.registerLogger(logger)
 conseiljs.registerFetch(fetch)
 const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
-const tezosNode = ''
-
-const { networkConfig: mainnet } = require('config')
+const mainnet = require('./config').networkConfig
 
 const hDAOFeed = async () => {
   let hDAOQuery = conseiljs.ConseilQueryBuilder.blankQuery()
@@ -21,7 +20,7 @@ const hDAOFeed = async () => {
     conseiljs.ConseilOperator.EQ,
     [mainnet.curationsPtr]
   )
-  hDAOQuery = conseiljs.ConseilQueryBuilder.setLimit(hDAOQuery, 10_000)
+  hDAOQuery = conseiljs.ConseilQueryBuilder.setLimit(hDAOQuery, 30_000)
 
   let hDAOResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -47,7 +46,8 @@ const getCollectionForAddress = async (address) => {
   collectionQuery = conseiljs.ConseilQueryBuilder.addFields(
     collectionQuery,
     'key',
-    'value'
+    'value',
+    'operation_group_id'
   )
   collectionQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     collectionQuery,
@@ -70,7 +70,7 @@ const getCollectionForAddress = async (address) => {
   )
   collectionQuery = conseiljs.ConseilQueryBuilder.setLimit(
     collectionQuery,
-    10_000
+    30_000
   )
 
   const collectionResult = await conseiljs.TezosConseilClient.getTezosEntityData(
@@ -81,14 +81,15 @@ const getCollectionForAddress = async (address) => {
   )
   let collection = collectionResult.map((i) => {
     return {
-      piece: i.key.toString().replace(/.* ([0-9]{1,}$)/, '$1'),
-      amount: Number(i.value),
+      piece: i['key'].toString().replace(/.* ([0-9]{1,}$)/, '$1'),
+      amount: Number(i['value']),
+      opId: i['operation_group_id'],
     }
   })
 
   const queryChunks = chunkArray(
     collection.map((i) => i.piece),
-    20
+    50
   ) // NOTE: consider increasing this number somewhat
   const makeObjectQuery = (keys) => {
     let mintedObjectsQuery = conseiljs.ConseilQueryBuilder.blankQuery()
@@ -145,14 +146,123 @@ const getCollectionForAddress = async (address) => {
     )
   )
 
+  const operationGroupIds = collectionResult.map((r) => r.operation_group_id)
+  const priceQueryChunks = chunkArray(operationGroupIds, 30)
+  const makeLastPriceQuery = (opIds) => {
+    let lastPriceQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+    lastPriceQuery = conseiljs.ConseilQueryBuilder.addFields(
+      lastPriceQuery,
+      'timestamp',
+      'amount',
+      'operation_group_hash',
+      'parameters_entrypoints',
+      'parameters'
+    )
+    lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+      lastPriceQuery,
+      'kind',
+      conseiljs.ConseilOperator.EQ,
+      ['transaction']
+    )
+    lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+      lastPriceQuery,
+      'status',
+      conseiljs.ConseilOperator.EQ,
+      ['applied']
+    )
+    lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+      lastPriceQuery,
+      'internal',
+      conseiljs.ConseilOperator.EQ,
+      ['false']
+    )
+    lastPriceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+      lastPriceQuery,
+      'operation_group_hash',
+      opIds.length > 1
+        ? conseiljs.ConseilOperator.IN
+        : conseiljs.ConseilOperator.EQ,
+      opIds
+    )
+    lastPriceQuery = conseiljs.ConseilQueryBuilder.setLimit(
+      lastPriceQuery,
+      opIds.length
+    )
+
+    return lastPriceQuery
+  }
+
+  const priceQueries = priceQueryChunks.map((c) => makeLastPriceQuery(c))
+  const priceMap = {}
+  await Promise.all(
+    priceQueries.map(
+      async (q) =>
+        await conseiljs.TezosConseilClient.getTezosEntityData(
+          { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+          'mainnet',
+          'operations',
+          q
+        ).then((result) =>
+          result.map((row) => {
+            let amount = 0
+            const action = row.parameters_entrypoints
+
+            if (action === 'collect') {
+              amount = Number(
+                row.parameters.toString().replace(/^Pair ([0-9]+) [0-9]+/, '$1')
+              )
+            } else if (action === 'transfer') {
+              amount = Number(
+                row.parameters
+                  .toString()
+                  .replace(
+                    /[{] Pair \"[1-9A-HJ-NP-Za-km-z]{36}\" [{] Pair \"[1-9A-HJ-NP-Za-km-z]{36}\" [(]Pair [0-9]+ [0-9]+[)] [}] [}]/,
+                    '$1'
+                  )
+              )
+            }
+
+            priceMap[row.operation_group_hash] = {
+              price: new BigNumber(row.amount),
+              amount,
+              timestamp: row.timestamp,
+              action,
+            }
+          })
+        )
+    )
+  )
+
   collection = collection.map((i) => {
+    let price = 0
+    let receivedOn = new Date()
+    let action = ''
+
+    try {
+      const priceRecord = priceMap[i.opId]
+      price = priceRecord.price
+        .dividedToIntegerBy(priceRecord.amount)
+        .toNumber()
+      receivedOn = new Date(priceRecord.timestamp)
+      action = priceRecord.action === 'collect' ? 'Purchased' : 'Received'
+    } catch {
+      //
+    }
+
+    delete i.opId
+
     return {
+      price: isNaN(price) ? 0 : price,
+      receivedOn,
+      action,
       ipfsHash: objectIpfsMap[i.piece.toString()],
       ...i,
     }
   })
 
-  return collection.sort((a, b) => parseInt(b.piece) - parseInt(a.piece)) // sort descending by id – most-recently minted art first
+  return collection.sort(
+    (a, b) => b.receivedOn.getTime() - a.receivedOn.getTime()
+  ) // sort descending by date – most-recently acquired art first
 }
 
 const gethDaoBalanceForAddress = async (address) => {
@@ -201,6 +311,313 @@ const gethDaoBalanceForAddress = async (address) => {
   }
 
   return balance
+}
+
+const getTokenBalance = async (
+  big_map_id,
+  address,
+  fa2 = false,
+  token_id = 0
+) => {
+  let tokenBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+  tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(
+    tokenBalanceQuery,
+    'value'
+  )
+  tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    tokenBalanceQuery,
+    'big_map_id',
+    conseiljs.ConseilOperator.EQ,
+    [big_map_id]
+  )
+  if (fa2) {
+    tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+      tokenBalanceQuery,
+      'key',
+      conseiljs.ConseilOperator.EQ,
+      [
+        `Pair 0x${conseiljs.TezosMessageUtils.writeAddress(
+          address
+        )} ${token_id}`,
+      ]
+    )
+  } else {
+    tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+      tokenBalanceQuery,
+      'key',
+      conseiljs.ConseilOperator.EQ,
+      [`0x${conseiljs.TezosMessageUtils.writeAddress(address)}`]
+    )
+  }
+  tokenBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    tokenBalanceQuery,
+    'value',
+    conseiljs.ConseilOperator.EQ,
+    [0],
+    true
+  )
+  tokenBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(
+    tokenBalanceQuery,
+    1
+  )
+
+  let balance = 0
+
+  try {
+    const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+      { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+      'mainnet',
+      'big_map_contents',
+      tokenBalanceQuery
+    )
+    balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+  } catch (error) {
+    console.log(
+      `getTokenBalance failed for ${JSON.stringify(
+        tokenBalanceQuery
+      )} with ${error}`
+    )
+  }
+
+  return balance
+}
+
+const getTezBalanceForAddress = async (address) => {
+  let accountQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+  accountQuery = conseiljs.ConseilQueryBuilder.addFields(
+    accountQuery,
+    'balance'
+  )
+  accountQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    accountQuery,
+    'account_id',
+    conseiljs.ConseilOperator.EQ,
+    [address],
+    false
+  )
+  accountQuery = conseiljs.ConseilQueryBuilder.setLimit(accountQuery, 1)
+
+  try {
+    const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+      { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+      'mainnet',
+      'accounts',
+      accountQuery
+    )
+    balance = balanceResult[0]['balance'] // TODO: consider bigNumber here, for the moment there is no reason for it
+  } catch (error) {
+    console.log(
+      `getTezBalanceForAddress failed for ${JSON.stringify(
+        accountQuery
+      )} with ${error}`
+    )
+  }
+
+  return balance
+}
+
+const gethDAOPerTez = async () => {
+  const tezBalance = await getTezBalanceForAddress(mainnet.hDaoSwap)
+  const hdaoBalance = await gethDaoBalanceForAddress(mainnet.hDaoSwap)
+  return hdaoBalance / tezBalance
+}
+
+const getKolibriPerTez = async () => {
+  const tezBalance = await getTezBalanceForAddress(mainnet.kolibriSwap)
+  var kolibriBalance = await getTokenBalance(
+    mainnet.kolibriLedger,
+    mainnet.kolibriSwap
+  )
+
+  // TODO: Find a better way to get the balance, this is FA1.2, mike?
+  kolibriBalance =
+    parseInt(kolibriBalance.replace('Pair {} ', '')) / 10 ** (18 - 6)
+  return kolibriBalance / tezBalance
+}
+
+const gethDaoBalances = async () => {
+  let hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+  hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(
+    hDaoBalanceQuery,
+    'key',
+    'value'
+  )
+  hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    hDaoBalanceQuery,
+    'big_map_id',
+    conseiljs.ConseilOperator.EQ,
+    [mainnet.daoLedger]
+  )
+  hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    hDaoBalanceQuery,
+    'value',
+    conseiljs.ConseilOperator.EQ,
+    [0],
+    true
+  )
+  hDaoBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(
+    hDaoBalanceQuery,
+    500_000
+  )
+
+  let balance = 0
+  let hdaoMap = {}
+
+  try {
+    const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+      { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+      'mainnet',
+      'big_map_contents',
+      hDaoBalanceQuery
+    )
+
+    balanceResult.forEach((row) => {
+      hdaoMap[
+        conseiljs.TezosMessageUtils.readAddress(
+          row['key'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1')
+        )
+      ] = row['value']
+    })
+    //#balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+  } catch (error) {
+    console.log(
+      `gethDaoBalanceForAddress failed for ${JSON.stringify(
+        hDaoBalanceQuery
+      )} with ${error}`
+    )
+  }
+
+  return hdaoMap
+}
+
+const getObjektOwners = async (objekt_id) => {
+  let objektBalanceQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+  objektBalanceQuery = conseiljs.ConseilQueryBuilder.addFields(
+    objektBalanceQuery,
+    'key',
+    'value'
+  )
+  objektBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    objektBalanceQuery,
+    'big_map_id',
+    conseiljs.ConseilOperator.EQ,
+    [mainnet.nftLedger]
+  )
+  objektBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    objektBalanceQuery,
+    'key',
+    conseiljs.ConseilOperator.ENDSWITH,
+    [` ${objekt_id}`],
+    false
+  )
+  objektBalanceQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    objektBalanceQuery,
+    'value',
+    conseiljs.ConseilOperator.EQ,
+    [0],
+    true
+  )
+  objektBalanceQuery = conseiljs.ConseilQueryBuilder.setLimit(
+    objektBalanceQuery,
+    500_000
+  )
+
+  let objektMap = {}
+
+  try {
+    const balanceResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+      { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+      'mainnet',
+      'big_map_contents',
+      objektBalanceQuery
+    )
+
+    balanceResult.forEach((row) => {
+      objektMap[
+        conseiljs.TezosMessageUtils.readAddress(
+          row['key'].toString().replace(/^Pair 0x([0-9a-z]{1,}) [0-9]+/, '$1')
+        )
+      ] = row['value']
+    })
+    //#balance = balanceResult[0]['value'] // TODO: consider bigNumber here, for the moment there is no reason for it
+  } catch (error) {
+    console.log(
+      `getObjektOwners failed for ${JSON.stringify(
+        objektBalanceQuery
+      )} with ${error}`
+    )
+  }
+
+  return objektMap
+}
+
+const getObjektMintingsLastWeek = async () => {
+  var d = new Date()
+  d.setDate(d.getDate() - 5)
+  let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(
+    mintOperationQuery,
+    'source'
+  )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    mintOperationQuery,
+    'kind',
+    conseiljs.ConseilOperator.EQ,
+    ['transaction']
+  )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    mintOperationQuery,
+    'timestamp',
+    conseiljs.ConseilOperator.AFTER,
+    [d.getTime()]
+  ) // 2021 Feb 1
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    mintOperationQuery,
+    'status',
+    conseiljs.ConseilOperator.EQ,
+    ['applied']
+  )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    mintOperationQuery,
+    'destination',
+    conseiljs.ConseilOperator.EQ,
+    [mainnet.protocol]
+  )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    mintOperationQuery,
+    'parameters_entrypoints',
+    conseiljs.ConseilOperator.EQ,
+    ['mint_OBJKT']
+  )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(
+    mintOperationQuery,
+    'block_level',
+    conseiljs.ConseilSortDirection.DESC
+  )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(
+    mintOperationQuery,
+    900_000
+  ) // TODO: this is hardwired and will not work for highly productive artists
+
+  const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
+    { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
+    'mainnet',
+    'operations',
+    mintOperationQuery
+  )
+
+  const mints = mintOperationResult.map((r) => r['source'])
+
+  var initialValue = {}
+  var reducer = function (minters, mintOp) {
+    if (!minters[mintOp]) {
+      minters[mintOp] = 1
+    } else {
+      minters[mintOp] = minters[mintOp] + 1
+    }
+    return minters
+  }
+  return mints.reduce(reducer, initialValue)
 }
 
 /**
@@ -258,7 +675,7 @@ const getArtisticOutputForAddress = async (address) => {
   )
   mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(
     mintOperationQuery,
-    10_000
+    256
   ) // TODO: this is hardwired and will not work for highly productive artists
 
   const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
@@ -334,6 +751,8 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async (max_time) => {
+  var d = new Date()
+  d.setDate(d.getDate() - 14)
   let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(
     mintOperationQuery,
@@ -348,9 +767,9 @@ const getArtisticUniverse = async (max_time) => {
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     mintOperationQuery,
     'timestamp',
-    conseiljs.ConseilOperator.AFTER,
-    [1612240919000]
-  ) // 2021 Feb 1
+    conseiljs.ConseilOperator.BETWEEN,
+    [d.getTime(), max_time]
+  ) //Two weeks ago
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     mintOperationQuery,
     'status',
@@ -369,9 +788,14 @@ const getArtisticUniverse = async (max_time) => {
     conseiljs.ConseilOperator.EQ,
     ['mint_OBJKT']
   )
+  mintOperationQuery = conseiljs.ConseilQueryBuilder.addOrdering(
+    mintOperationQuery,
+    'block_level',
+    conseiljs.ConseilSortDirection.DESC
+  )
   mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(
     mintOperationQuery,
-    14_000
+    2500
   )
 
   const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
@@ -399,7 +823,7 @@ const getArtisticUniverse = async (max_time) => {
   )
   royaltiesQuery = conseiljs.ConseilQueryBuilder.setLimit(
     royaltiesQuery,
-    10_000
+    30_000
   )
   const royaltiesResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -426,7 +850,7 @@ const getArtisticUniverse = async (max_time) => {
     conseiljs.ConseilOperator.EQ,
     [mainnet.nftSwapMap]
   )
-  swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 10_000) // NOTE, limited to 10_000
+  swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 30_000) // NOTE, limited to 30_000
 
   const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -528,13 +952,51 @@ const getArtisticUniverse = async (max_time) => {
   return universe
 }
 
+const getFeaturedArtisticUniverse = async (max_time) => {
+  hdaoMap = await gethDaoBalances()
+
+  mintsPerCreator = await getObjektMintingsLastWeek()
+
+  artisticUniverse = await getArtisticUniverse(max_time)
+
+  hdaoPerTez = await gethDAOPerTez()
+
+  // Cost to be on feed per objekt last 7 days shouldn't be higher than:
+  //   0.1tez
+  //   1 hDAO
+  // But not lower than:
+  //   0.01 hDAO
+  //
+  // We should probably add more thresholds like $, € and yen
+  // It should be cheap but not too cheap and it shouldn't be
+  // affected by tez or hDAO volatility
+
+  thresholdHdao = Math.min(1_000_000, Math.max(100_000 * hdaoPerTez, 10_000))
+
+  return artisticUniverse.filter(function (o) {
+    return (
+      (hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1) >
+      thresholdHdao
+    )
+  })
+}
+
+const getRecommendedCurateDefault = async () => {
+  hdaoPerTez = await gethDAOPerTez()
+  kolPerTez = await getKolibriPerTez()
+  hdaoPerKol = hdaoPerTez / kolPerTez
+  //Minimum of $0.1, 0.1 hDAO, and 0.1tez, in hDAO
+  return Math.floor(
+    Math.min(hdaoPerKol * 0.1, 0.1, 0.1 * hdaoPerTez) * 1_000_000
+  )
+}
+
 /**
  * Returns object ipfs hash and swaps if any
  *
  * @param {number} objectId
  * @returns
  */
-
 const getObjectById = async (objectId) => {
   let objectQuery = conseiljs.ConseilQueryBuilder.blankQuery()
   objectQuery = conseiljs.ConseilQueryBuilder.addFields(objectQuery, 'value')
@@ -632,5 +1094,8 @@ module.exports = {
   getArtisticOutputForAddress,
   getObjectById,
   getArtisticUniverse,
+  getFeaturedArtisticUniverse,
   hDAOFeed,
+  getRecommendedCurateDefault,
+  getObjektOwners,
 }
