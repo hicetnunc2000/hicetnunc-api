@@ -198,19 +198,18 @@ const app = express()
 app.use(express.json())
 app.use(cors({ origin: '*' }))
 
-const feedfeatured = async(req, res) => {
+app.post('/feed|/featured', async (req, res) => {
     const feedOffset = req.body.counter || 0
     const isFeatured = req.path === '/featured'
-
-    await getFeed(res, feedOffset, isFeatured, req.body.max_time)
-}
-
-app.post('/feed|/featured', async (req, res) => {
-    await feedfeatured(req, res)
+    const max_time = req.body.max_time
+    await getFeed(res, feedOffset, isFeatured, max_time)
 })
 
 app.get('/feed|/featured', async (req, res) => {
-    await feedfeatured(req, res)
+    const feedOffset = req.query.counter || 0
+    const isFeatured = req.path === '/featured'
+    const max_time = req.query.max_time
+    await getFeed(res, feedOffset, isFeatured, max_time)
 })
 
 
