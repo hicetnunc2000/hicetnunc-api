@@ -3,11 +3,10 @@
 const { getObjktById, getRestrictedObjkts } = require('utils')
 
 module.exports = async function readObjkt(req, res) {
-  const { objkt_id: objktId, tz: tezosAddr } = req.body
-
+  const objktId = req.body.objkt_id
   const restrictedObjkts = await getRestrictedObjkts()
 
-  if (restrictedObjkts.includes(tezosAddr)) {
+  if (restrictedObjkts.includes(objktId)) {
     return res.json({ result: [] })
   }
 
