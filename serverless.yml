@@ -16,7 +16,7 @@ provider:
 
 functions:
   handler:
-    handler: index.handler
+    handler: src/index.handler
     timeout: 120
     events:
       - http:
