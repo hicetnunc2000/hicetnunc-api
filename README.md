@@ -14,3 +14,10 @@ Built with APIs from @Cryptonomic and @baking-bad.
 npm i
 npm start
 ```
+
+```
+POST /feed :counter
+POST /tz :tz
+POST /objkt :objkt_id
+POST /hdao :counter
+```
