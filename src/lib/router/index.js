@@ -24,6 +24,7 @@ router
   .route('/feed|/featured')
   .all(_processClientCache)
   .get((req, res, next) => {
+    req.body.max_time = req.query.max_time
     req.body.counter = req.query.counter
 
     return next()
@@ -39,7 +40,7 @@ router
   })
   .get((req, res, next) => {
     req.body.counter = req.query.counter
-
+    req.body.max_time = req.query.max_time
     return next()
   }, _asyncHandler(readRandomFeed))
   .post(_asyncHandler(readRandomFeed))

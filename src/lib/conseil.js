@@ -20,7 +20,7 @@ const hDAOFeed = async () => {
     conseiljs.ConseilOperator.EQ,
     [mainnet.curationsPtr]
   )
-  hDAOQuery = conseiljs.ConseilQueryBuilder.setLimit(hDAOQuery, 30_000)
+  hDAOQuery = conseiljs.ConseilQueryBuilder.setLimit(hDAOQuery, 300_000)
 
   let hDAOResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -70,7 +70,7 @@ const getCollectionForAddress = async (address) => {
   )
   collectionQuery = conseiljs.ConseilQueryBuilder.setLimit(
     collectionQuery,
-    30_000
+    300_000
   )
 
   const collectionResult = await conseiljs.TezosConseilClient.getTezosEntityData(
@@ -553,7 +553,7 @@ const getObjektOwners = async (objekt_id) => {
 
 const getObjektMintingsLastWeek = async () => {
   var d = new Date()
-  d.setDate(d.getDate() - 5)
+  d.setDate(d.getDate() - 7)
   let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(
     mintOperationQuery,
@@ -596,7 +596,7 @@ const getObjektMintingsLastWeek = async () => {
   )
   mintOperationQuery = conseiljs.ConseilQueryBuilder.setLimit(
     mintOperationQuery,
-    900_000
+    500_000
   ) // TODO: this is hardwired and will not work for highly productive artists
 
   const mintOperationResult = await conseiljs.TezosConseilClient.getTezosEntityData(
@@ -751,6 +751,7 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async (max_time) => {
+  max_time = ((typeof max_time !== 'undefined') && max_time != 0) ? max_time : (new Date()).getTime()
   var d = new Date()
   d.setDate(d.getDate() - 14)
   let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
@@ -823,7 +824,7 @@ const getArtisticUniverse = async (max_time) => {
   )
   royaltiesQuery = conseiljs.ConseilQueryBuilder.setLimit(
     royaltiesQuery,
-    30_000
+    5_000_000
   )
   const royaltiesResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -850,7 +851,7 @@ const getArtisticUniverse = async (max_time) => {
     conseiljs.ConseilOperator.EQ,
     [mainnet.nftSwapMap]
   )
-  swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 30_000) // NOTE, limited to 30_000
+  swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 5_000_000) // NOTE, limited to 30_000
 
   const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -960,10 +961,14 @@ const getFeaturedArtisticUniverse = async (max_time) => {
   artisticUniverse = await getArtisticUniverse(max_time)
 
   hdaoPerTez = await gethDAOPerTez()
+  kolPerTez = await getKolibriPerTez()
+  hdaoPerKol = hdaoPerTez / kolPerTez
+
 
   // Cost to be on feed per objekt last 7 days shouldn't be higher than:
   //   0.1tez
   //   1 hDAO
+  //   $1
   // But not lower than:
   //   0.01 hDAO
   //
@@ -971,14 +976,19 @@ const getFeaturedArtisticUniverse = async (max_time) => {
   // It should be cheap but not too cheap and it shouldn't be
   // affected by tez or hDAO volatility
 
-  thresholdHdao = Math.min(1_000_000, Math.max(100_000 * hdaoPerTez, 10_000))
-
-  return artisticUniverse.filter(function (o) {
-    return (
-      (hdaoMap[o.minter] || 0) / Math.max(mintsPerCreator[o.minter] || 1, 1) >
-      thresholdHdao
-    )
-  })
+  let thresholdHdao = Math.floor(
+    Math.max(10_000,
+      Math.min(1_000_000,
+        Math.max(
+            100_000 * hdaoPerTez,
+            100_000 * hdaoPerKol)
+          )
+        )) 
+  //thresholdHdao = 0
+    
+  return artisticUniverse.filter(o =>
+      (hdaoMap[o.minter] || 100_000) / Math.max(mintsPerCreator[o.minter] || 1, 1) >
+      thresholdHdao)
 }
 
 const getRecommendedCurateDefault = async () => {
