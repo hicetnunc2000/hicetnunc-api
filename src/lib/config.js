@@ -1,4 +1,10 @@
-const mainnet = {
+'use strict'
+
+module.exports = {
+  burnAddress:
+    process.env.BURN_ADDRESS || 'tz1burnburnburnburnburnburnburjAYjjX',
+  feedItemsPerPage: process.env.FEED_ITEMS_PER_PAGE || 30,
+  networkConfig: {
     network: 'mainnet',
     nftContract: 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton',
     hDAOToken: 'KT1AFA2mwNUMNd4SsujE1YYp29vd8BZejyKW',
@@ -13,8 +19,6 @@ const mainnet = {
     kolibriLedger: 380,
     hDaoSwap: "KT1V41fGzkdTJki4d11T1Rp9yPkCmDhB7jph", 
     kolibriSwap: "KT1CiSKXR68qYSxnbzjwvfeMCRburaSDonT2",
-}
-
-module.exports = {
-    networkConfig: mainnet
+  },
+  serverPort: 3001,
 }
