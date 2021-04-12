@@ -751,6 +751,7 @@ const getArtisticOutputForAddress = async (address) => {
 }
 
 const getArtisticUniverse = async (max_time) => {
+  max_time = ((typeof max_time !== 'undefined') && max_time != 0) ? max_time : (new Date()).getTime()
   var d = new Date()
   d.setDate(d.getDate() - 14)
   let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
