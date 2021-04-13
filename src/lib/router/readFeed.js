@@ -7,10 +7,10 @@ const { getIpfsHash, paginateFeed, sortFeed } = require('utils')
 module.exports = async function readFeed(req, res) {
   const isFeatured = req.path === '/featured'
   const pageCursor = req.body.counter
-  const fetchTime = req.feedFetchAt
+  const max_time = req.body.max_time
   const rawFeed = await (isFeatured
-    ? conseil.getFeaturedArtisticUniverse(fetchTime)
-    : conseil.getArtisticUniverse(fetchTime))
+    ? conseil.getFeaturedArtisticUniverse(max_time)
+    : conseil.getArtisticUniverse(max_time))
 
   const paginatedFeed = paginateFeed(sortFeed(rawFeed), pageCursor)
   const feed = await Promise.all(
