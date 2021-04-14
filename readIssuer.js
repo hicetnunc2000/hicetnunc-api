@@ -1,10 +1,10 @@
 'use strict'
 
-const conseil = require('conseil')
+const conseil = require('./conseil')
 const _ = require('lodash')
 
-const { getIpfsHash, getObjktOwners, getRestrictedAddresses } = require('utils')
-const { burnAddress } = require('config')
+const { getIpfsHash, getObjktOwners, getRestrictedAddresses } = require('./utils')
+const { burnAddress } = require('./config')
 
 module.exports = async function readIssuer(req, res) {
   const issuerAddress = req.body.tz

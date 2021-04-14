@@ -1,10 +1,10 @@
 'use strict'
 
 const axios = require('axios')
-const conseil = require('conseil')
+const conseil = require('./conseil')
 const _ = require('lodash')
 
-const { feedItemsPerPage } = require('config')
+const { feedItemsPerPage } = require('./config')
 
 module.exports = {
   getIpfsHash,
