@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "start-dev": "NODE_ENV=development ./node_modules/.bin/nodemon src/index.js",
-    "pretty": "./node_modules/.bin/prettier --loglevel warn --write src"
+    "start": "sls offline start",
+    "start-express": "NODE_ENV=development ./node_modules/.bin/nodemon index.js",
+    "pretty": "./node_modules/.bin/prettier --loglevel warn --write lib"
   },
   "repository": {
     "type": "git",
