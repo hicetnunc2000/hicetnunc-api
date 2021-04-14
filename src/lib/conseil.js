@@ -11,6 +11,32 @@ const conseilServer = 'https://conseil-prod.cryptonomic-infra.tech'
 const conseilApiKey = 'aa73fa8a-8626-4f43-a605-ff63130f37b1' // signup at nautilus.cloud
 const mainnet = require('./config').networkConfig
 
+
+const MILLISECOND_MODIFIER = 1000
+const ONE_MINUTE_MILLIS = 60 * MILLISECOND_MODIFIER
+const ONE_HOUR_MILLIS = 60 * ONE_MINUTE_MILLIS
+const ONE_DAY_MILLIS = 24 * ONE_HOUR_MILLIS
+const ONE_WEEK_MILLIS = 7 * ONE_DAY_MILLIS
+
+const _getMinTime = () => {
+  var d = new Date()
+  d.setDate(d.getDate() - 14)
+  return  d.getTime()
+}
+
+const _subtractWeek = (timestamp) => {
+  return timestamp - ONE_WEEK_MILLIS
+}
+
+const _floorTimeToMinute = (currentTime) => {
+  return Math.floor(currentTime / ONE_MINUTE_MILLIS) * ONE_MINUTE_MILLIS
+}
+
+const _getTimeQuantizedToMinute = () => {
+  return _floorTimeToMinute((new Date()).getTime())
+} 
+
+
 const hDAOFeed = async () => {
   let hDAOQuery = conseiljs.ConseilQueryBuilder.blankQuery()
   hDAOQuery = conseiljs.ConseilQueryBuilder.addFields(hDAOQuery, 'key', 'value')
@@ -551,9 +577,7 @@ const getObjektOwners = async (objekt_id) => {
   return objektMap
 }
 
-const getObjektMintingsLastWeek = async () => {
-  var d = new Date()
-  d.setDate(d.getDate() - 7)
+const getObjektMintingsLastWeek = async (min_time, max_time) => {
   let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(
     mintOperationQuery,
@@ -568,8 +592,8 @@ const getObjektMintingsLastWeek = async () => {
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     mintOperationQuery,
     'timestamp',
-    conseiljs.ConseilOperator.AFTER,
-    [d.getTime()]
+    conseiljs.ConseilOperator.BETWEEN,
+    [min_time, max_time]
   ) // 2021 Feb 1
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     mintOperationQuery,
@@ -750,10 +774,11 @@ const getArtisticOutputForAddress = async (address) => {
     .sort((a, b) => parseInt(b.objectId) - parseInt(a.objectId))
 }
 
+
+
 const getArtisticUniverse = async (max_time) => {
-  max_time = ((typeof max_time !== 'undefined') && max_time != 0) ? max_time : (new Date()).getTime()
-  var d = new Date()
-  d.setDate(d.getDate() - 14)
+  max_time = ((typeof max_time !== 'undefined') && max_time != 0) ? max_time : _getTimeQuantizedToMinute()
+  const min_time = _subtractWeek(max_time)
   let mintOperationQuery = conseiljs.ConseilQueryBuilder.blankQuery()
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addFields(
     mintOperationQuery,
@@ -769,7 +794,7 @@ const getArtisticUniverse = async (max_time) => {
     mintOperationQuery,
     'timestamp',
     conseiljs.ConseilOperator.BETWEEN,
-    [d.getTime(), max_time]
+    [min_time, max_time]
   ) //Two weeks ago
   mintOperationQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     mintOperationQuery,
@@ -822,9 +847,15 @@ const getArtisticUniverse = async (max_time) => {
     conseiljs.ConseilOperator.EQ,
     [mainnet.nftRoyaltiesMap]
   )
+  royaltiesQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    royaltiesQuery,
+    'timestamp',
+    conseiljs.ConseilOperator.BETWEEN,
+    [min_time, max_time]
+  ) //Two weeks ago
   royaltiesQuery = conseiljs.ConseilQueryBuilder.setLimit(
     royaltiesQuery,
-    5_000_000
+    100_000
   )
   const royaltiesResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -847,11 +878,17 @@ const getArtisticUniverse = async (max_time) => {
   )
   swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(
     swapsQuery,
+    'timestamp',
+    conseiljs.ConseilOperator.BETWEEN,
+    [min_time, max_time]
+  ) //Two weeks ago
+  swapsQuery = conseiljs.ConseilQueryBuilder.addPredicate(
+    swapsQuery,
     'big_map_id',
     conseiljs.ConseilOperator.EQ,
     [mainnet.nftSwapMap]
   )
-  swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 5_000_000) // NOTE, limited to 30_000
+  swapsQuery = conseiljs.ConseilQueryBuilder.setLimit(swapsQuery, 30_000) // NOTE, limited to 30_000
 
   const swapsResult = await conseiljs.TezosConseilClient.getTezosEntityData(
     { url: conseilServer, apiKey: conseilApiKey, network: 'mainnet' },
@@ -954,9 +991,13 @@ const getArtisticUniverse = async (max_time) => {
 }
 
 const getFeaturedArtisticUniverse = async (max_time) => {
+  max_time = ((typeof max_time !== 'undefined') && max_time != 0) ? max_time : _getTimeQuantizedToMinute()
+  console.log('max time', max_time)
+  const min_time = _subtractWeek(max_time)
+  console.log('min time', min_time)
   hdaoMap = await gethDaoBalances()
 
-  mintsPerCreator = await getObjektMintingsLastWeek()
+  mintsPerCreator = await getObjektMintingsLastWeek(min_time, max_time)
 
   artisticUniverse = await getArtisticUniverse(max_time)
 
@@ -983,7 +1024,7 @@ const getFeaturedArtisticUniverse = async (max_time) => {
             100_000 * hdaoPerTez,
             100_000 * hdaoPerKol)
           )
-        )) 
+        ))
   //thresholdHdao = 0
     
   return artisticUniverse.filter(o =>
