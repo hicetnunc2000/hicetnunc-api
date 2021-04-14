@@ -11,6 +11,7 @@ Built with APIs from @Cryptonomic and @baking-bad.
 ## Running
 
 ```bash
+npm install -g serverless@2.35.0
 npm i
 npm start
 ```
