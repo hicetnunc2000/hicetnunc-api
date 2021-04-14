@@ -1018,11 +1018,11 @@ const getFeaturedArtisticUniverse = async (max_time) => {
   // affected by tez or hDAO volatility
 
   let thresholdHdao = Math.floor(
-    Math.max(100_000,
+    Math.max(10_000,
       Math.min(1_000_000,
         Math.max(
             100_000 * hdaoPerTez,
-            1_000_000 * hdaoPerKol)
+            100_000 * hdaoPerKol)
           )
         ))
   //thresholdHdao = 0
