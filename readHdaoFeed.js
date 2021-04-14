@@ -1,9 +1,9 @@
 'use strict'
 
 const _ = require('lodash')
-const conseil = require('conseil')
+const conseil = require('./conseil')
 
-const { getObjktById, paginateFeed } = require('utils')
+const { getObjktById, paginateFeed } = require('./utils')
 
 module.exports = async function readHdaoFeed(req, res) {
   const rawFeed = await conseil.hDAOFeed()
