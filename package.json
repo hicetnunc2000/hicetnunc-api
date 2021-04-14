@@ -40,6 +40,7 @@
   "devDependencies": {
     "nodemon": "^2.0.7",
     "prettier": "^2.2.1",
+    "serverless-offline": "^6.9.0",
     "serverless-plugin-include-dependencies": "^4.1.0"
   }
 }
