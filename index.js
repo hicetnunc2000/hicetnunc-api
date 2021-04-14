@@ -6,10 +6,10 @@ require('dotenv').config()
 
 const cors = require('cors')
 const express = require('express')
-const router = require('./router')
+const router = require('./lib/router/router')
 const serverless = require('serverless-http')
 
-const { serverPort: PORT } = require('./config')
+const { serverPort: PORT } = require('./lib/config')
 
 const app = express()
 
