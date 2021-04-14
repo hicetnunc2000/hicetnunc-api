@@ -1,7 +1,7 @@
 
 service: hicetnunc-apiv2
 
-frameworkVersion: '2.8.0'
+frameworkVersion: '2.35.0'
 
 package:
   exclude:
@@ -10,6 +10,7 @@ package:
 plugins:
   - serverless-plugin-include-dependencies
   - serverless-dotenv-plugin
+  - serverless-offline
 provider:
   name: aws
   runtime: nodejs12.x
@@ -30,3 +31,6 @@ functions:
           cors:
             origin: '*'
 
+custom:
+  serverless-offline:
+    httpPort: 3001
