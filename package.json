@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "start-dev": "NODE_ENV=development ./node_modules/.bin/nodemon src/index.js",
-    "pretty": "./node_modules/.bin/prettier --loglevel warn --write src"
+    "start": "sls offline start",
+    "start-express": "NODE_ENV=development ./node_modules/.bin/nodemon index.js",
+    "pretty": "./node_modules/.bin/prettier --loglevel warn --write lib"
   },
   "repository": {
     "type": "git",
@@ -40,6 +40,7 @@
   "devDependencies": {
     "nodemon": "^2.0.7",
     "prettier": "^2.2.1",
+    "serverless-offline": "^6.9.0",
     "serverless-plugin-include-dependencies": "^4.1.0"
   }
 }
