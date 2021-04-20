@@ -1,0 +1,1 @@
+{"version":3,"file":"FetchSelector.js","sourceRoot":"","sources":["../../src/utils/FetchSelector.ts"],"names":[],"mappings":";;AAMA,MAAqB,aAAa;IAG9B,MAAM,CAAC,QAAQ,CAAC,KAAU;QACtB,IAAI,CAAC,WAAW,GAAG,KAAK,CAAC;IAC7B,CAAC;;AALL,gCAQC;AADU,mBAAK,GAAmD,CAAC,GAAW,EAAE,OAAwB,EAAE,EAAE,CAAC,aAAa,CAAC,WAAW,CAAC,GAAG,EAAE,OAAO,CAAC,CAAC"}

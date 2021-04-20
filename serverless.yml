@@ -1,0 +1,30 @@
+service: mongo-hicetnunc
+
+frameworkVersion: '2.8.0'
+
+package:
+  exclude:
+    - node_modules/**
+
+plugins:
+  - serverless-plugin-include-dependencies
+  - serverless-dotenv-plugin
+provider:
+  name: aws
+  runtime: nodejs12.x
+
+functions:
+  handler:
+    handler: index.handler
+    timeout: 120
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors:
+            origin: '*'
+      - http: 
+          path: /{proxy+}
+          method: ANY
+          cors:
+            origin: '*'
