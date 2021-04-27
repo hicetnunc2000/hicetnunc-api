@@ -30,6 +30,7 @@
     "lodash": "^4.17.21",
     "loglevel": "1.7.1",
     "node-fetch": "2.6.1",
+    "redis": "^3.1.2",
     "serverless-dotenv-plugin": "^3.8.1",
     "serverless-http": "^2.7.0"
   },
