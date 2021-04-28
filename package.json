@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "sls offline start",
+    "start": "serverless offline start --printOutput",
     "start-express": "NODE_ENV=development ./node_modules/.bin/nodemon index.js",
     "pretty": "./node_modules/.bin/prettier --loglevel warn --write lib",
     "swagger-autogen": "node lib/swagger.js"
