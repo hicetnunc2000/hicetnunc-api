@@ -1,7 +1,7 @@
 
 service: hicetnunc-apiv2
 
-frameworkVersion: '2.35.0'
+frameworkVersion: '2.8.0'
 
 package:
   exclude:
