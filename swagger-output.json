@@ -1,0 +1,456 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Hic et Nunc API",
+    "description": "This API is used as the backend for https://hicetnunc.xyz. It consumes information from a number of Tezos blockchain information providers, including https://cryptonomic.github.io/ConseilJS/ and https://better-call.dev/docs, along with objkt metadata sourced from IPFS",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3001",
+  "basePath": "/",
+  "tags": [],
+  "schemes": [
+    "https",
+    "http"
+  ],
+  "consumes": [],
+  "produces": [],
+  "paths": {
+    "/feed/{featured}": {
+      "get": {
+        "tags": [],
+        "summary": "Main feed",
+        "description": "Endpoint used to return the most recently minted OBJKTs. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500. Use of the optional `featured` path parameter will apply a different filter to the feed.",
+        "parameters": [
+          {
+            "name": "featured",
+            "in": "path",
+            "required": false,
+            "type": "string",
+            "description": "Applies a filter to the results - returning no more than 1 item per minter,  including only those swapped for less than 0.1 tez and that haven't been updated with  lots of hDAO.",
+            "schema": {
+              "type": "string",
+              "example": "featured"
+            }
+          },
+          {
+            "name": "counter",
+            "in": "querystring",
+            "description": "Pagination number. Default is 0",
+            "required": false,
+            "type": "number",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "counter": {
+                  "type": "number",
+                  "example": 0
+                }
+              }
+            }
+          },
+          {
+            "name": "max_time",
+            "in": "querystring",
+            "description": "Unix timestamp. Used to limit the maximum blockchain operation by date/time",
+            "required": false,
+            "type": "number",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "max_time": {
+                  "type": "number",
+                  "example": 1618585403788
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/objkt"
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            },
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [],
+        "summary": "Main feed",
+        "description": "Endpoint used to return the most recently minted OBJKTs. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500. Use of the optional `featured` path parameter will apply a different filter to the feed.",
+        "parameters": [
+          {
+            "name": "featured",
+            "in": "path",
+            "required": false,
+            "type": "string",
+            "description": "Applies a filter to the results - returning no more than 1 item per minter,  including only those swapped for less than 0.1 tez and that haven't been updated with  lots of hDAO.",
+            "schema": {
+              "type": "string",
+              "example": "featured"
+            }
+          },
+          {
+            "name": "counter",
+            "in": "body",
+            "description": "Pagination number. Default is 0",
+            "required": false,
+            "type": "number",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "counter": {
+                  "type": "number",
+                  "example": 0
+                }
+              }
+            }
+          },
+          {
+            "name": "max_time",
+            "in": "body",
+            "description": "Unix epoch timestamp. Used to limit the maximum blockchain operation by date/time",
+            "required": false,
+            "type": "number",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "max_time": {
+                  "type": "number",
+                  "example": 1618585403788
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/objkt"
+                  }
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            },
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/random": {
+      "get": {
+        "tags": [],
+        "summary": "Random OBJKTs",
+        "description": "Endpoint used to return an array of a random set of OBJKTs.",
+        "parameters": [
+          {
+            "name": "counter",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "obj",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "counter": {
+                  "type": "string",
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "post": {
+        "tags": [],
+        "summary": "Random OBJKTs",
+        "description": "Endpoint used to return an array of a random set of OBJKTs.",
+        "parameters": [],
+        "responses": {}
+      }
+    },
+    "/tz": {
+      "get": {
+        "tags": [],
+        "summary": "Account information",
+        "description": "Endpoint used to return information about a wallet address. This  includes the OBJKTs that wallet created, those that it holds, and the amount of hDAO it  holds. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.",
+        "parameters": [
+          {
+            "name": "tz",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "obj",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "tz": {
+                  "type": "string",
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "post": {
+        "tags": [],
+        "summary": "Account information",
+        "description": "Endpoint used to return information about a wallet address. This  includes the OBJKTs that wallet created, those that it holds, and the amount of hDAO it  holds. Data is returned 30 at a time, and can be paginated. Total results are limited to 2500.",
+        "parameters": [],
+        "responses": {}
+      }
+    },
+    "/objkt": {
+      "get": {
+        "tags": [],
+        "summary": "OBJKT details",
+        "description": "Endpoint used to return detailed information about an OBJKT.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "obj",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "objkt_id": {
+                  "type": "string",
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "post": {
+        "tags": [],
+        "summary": "OBJKT details",
+        "description": "Endpoint used to return detailed information about an OBJKT.",
+        "parameters": [],
+        "responses": {}
+      }
+    },
+    "/hdao": {
+      "get": {
+        "tags": [],
+        "summary": "hDAO feed",
+        "description": "Endpoint used to return the list of OBJKTs with hDAO in descending  order of how many hDAO have been spend on them. Data is returned 30 at a time, and can be  paginated. Total results are limited to 30000.",
+        "parameters": [
+          {
+            "name": "counter",
+            "in": "querystring",
+            "type": "number",
+            "description": "Results page count (default 0)",
+            "required": false
+          },
+          {
+            "name": "obj",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "counter": {
+                  "type": "string",
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {}
+      },
+      "post": {
+        "tags": [],
+        "summary": "hDAO feed",
+        "description": "Endpoint used to return the list of OBJKTs with hDAO in descending  order of how many hDAO have been spend on them. Data is returned 30 at a time, and can be  paginated. Total results are limited to 30000.",
+        "parameters": [
+          {
+            "name": "counter",
+            "in": "body",
+            "description": "Results page count (default 0)",
+            "type": "number",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "counter": {
+                  "type": "number",
+                  "example": 0
+                }
+              }
+            }
+          }
+        ],
+        "responses": {}
+      }
+    },
+    "/recommend_curate": {
+      "get": {
+        "tags": [],
+        "summary": "hDAO minimum spend recommendation",
+        "description": "",
+        "parameters": [],
+        "responses": {}
+      }
+    }
+  },
+  "definitions": {
+    "objkt": {
+      "type": "object",
+      "properties": {
+        "objectId": {
+          "type": "string",
+          "example": "24043"
+        },
+        "ipfsHash": {
+          "type": "string",
+          "example": "QmXx8hY7nh41bFzEfXW1iiiKcEBJgsdkjvtMvP2Xj3o2Z7"
+        },
+        "minter": {
+          "type": "string",
+          "example": "tz1eT35U51k1FxduLgFFTqrcYV4b6LRtTvUr"
+        },
+        "swaps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/swap"
+          }
+        },
+        "token_info": {
+          "$ref": "#/definitions/token_info"
+        },
+        "token_id": {
+          "type": "string",
+          "example": "24043"
+        }
+      }
+    },
+    "swap": {
+      "type": "object",
+      "properties": {
+        "swap_id": {
+          "type": "string",
+          "example": "24043"
+        },
+        "objkt_id": {
+          "type": "string",
+          "example": "20987"
+        },
+        "amount": {
+          "type": "string",
+          "example": "14"
+        },
+        "xtz_per_objkt": {
+          "type": "string",
+          "example": "1000000"
+        }
+      }
+    },
+    "token_info": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "example": "Neonland II"
+        },
+        "description": {
+          "type": "string",
+          "example": "Circle"
+        },
+        "tags": {
+          "type": "array",
+          "example": [
+            "neon",
+            "circle"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "symbol": {
+          "type": "string",
+          "example": "OBJKT"
+        },
+        "artifactUri": {
+          "type": "string",
+          "example": "ipfs://QmewqUfDNPf8ZV51Awwhs62nkEVHk6fBcivtEVZvpLn5Vi"
+        },
+        "displayUri": {
+          "type": "string",
+          "example": ""
+        },
+        "creators": {
+          "type": "array",
+          "example": [
+            "tz1eT35U51k1FxduLgFFTqrcYV4b6LRtTvUr"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": {
+                "type": "string",
+                "example": "ipfs://QmewqUfDNPf8ZV51Awwhs62nkEVHk6fBcivtEVZvpLn5Vi"
+              },
+              "mimeType": {
+                "type": "string",
+                "example": "image/png"
+              }
+            }
+          }
+        },
+        "thumbnailUri": {
+          "type": "string",
+          "example": "ipfs://QmNrhZHUaEqxhyLfqoq1mtHSipkWHeT31LNHb1QEbDHgnc"
+        },
+        "decimals": {
+          "type": "number",
+          "example": 0
+        },
+        "isBooleanAmount": {
+          "type": "boolean",
+          "example": false
+        },
+        "shouldPreferSymbol": {
+          "type": "boolean",
+          "example": false
+        }
+      }
+    }
+  }
+}
