@@ -14,8 +14,6 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "mongodb": "^3.6.6",
-    "node-fetch": "^2.6.1",
     "serverless": "^2.8.0",
     "serverless-http": "^2.7.0",
     "serverless-plugin-include-dependencies": "^4.1.0"

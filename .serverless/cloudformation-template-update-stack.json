@@ -74,7 +74,7 @@
     "HandlerLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/mongo-hicetnunc-dev-handler"
+        "LogGroupName": "/aws/lambda/api-v3-dev-handler"
       }
     },
     "IamRoleLambdaExecution": {
@@ -102,7 +102,7 @@
               "Fn::Join": [
                 "-",
                 [
-                  "mongo-hicetnunc",
+                  "api-v3",
                   "dev",
                   "lambda"
                 ]
@@ -119,7 +119,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/mongo-hicetnunc-dev*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-v3-dev*:*"
                     }
                   ]
                 },
@@ -130,7 +130,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/mongo-hicetnunc-dev*:*:*"
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-v3-dev*:*:*"
                     }
                   ]
                 }
@@ -143,7 +143,7 @@
           "Fn::Join": [
             "-",
             [
-              "mongo-hicetnunc",
+              "api-v3",
               "dev",
               {
                 "Ref": "AWS::Region"
@@ -161,11 +161,11 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/mongo-hicetnunc/dev/1621929761092-2021-05-25T08:02:41.092Z/mongo-hicetnunc.zip"
+          "S3Key": "serverless/api-v3/dev/1623089185491-2021-06-07T18:06:25.491Z/api-v3.zip"
         },
-        "Handler": "handler.database",
+        "Handler": "handler.v3",
         "Runtime": "nodejs12.x",
-        "FunctionName": "mongo-hicetnunc-dev-handler",
+        "FunctionName": "api-v3-dev-handler",
         "MemorySize": 1024,
         "Timeout": 6,
         "Role": {
@@ -179,20 +179,20 @@
         "HandlerLogGroup"
       ]
     },
-    "HandlerLambdaVersionZQy3oNzNsuyPKGCJ3mltEPnTczSy1CxiOxom5KgYvw": {
+    "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "HandlerLambdaFunction"
         },
-        "CodeSha256": "83p7LCQNIOwZTlEraX6uCyOIjeBwP0uBc4wsscN8Vuc="
+        "CodeSha256": "JM09ACzIn+qR8vgr62klR9Z4YLYcWn6aQj5+gXB+AOE="
       }
     },
     "ApiGatewayRestApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
-        "Name": "dev-mongo-hicetnunc",
+        "Name": "dev-api-v3",
         "EndpointConfiguration": {
           "Types": [
             "EDGE"
@@ -398,7 +398,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1621929754126": {
+    "ApiGatewayDeployment1623089179782": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -457,16 +457,16 @@
         "Ref": "ServerlessDeploymentBucket"
       },
       "Export": {
-        "Name": "sls-mongo-hicetnunc-dev-ServerlessDeploymentBucketName"
+        "Name": "sls-api-v3-dev-ServerlessDeploymentBucketName"
       }
     },
     "HandlerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "HandlerLambdaVersionZQy3oNzNsuyPKGCJ3mltEPnTczSy1CxiOxom5KgYvw"
+        "Ref": "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc"
       },
       "Export": {
-        "Name": "sls-mongo-hicetnunc-dev-HandlerLambdaFunctionQualifiedArn"
+        "Name": "sls-api-v3-dev-HandlerLambdaFunctionQualifiedArn"
       }
     },
     "ServiceEndpoint": {
@@ -492,7 +492,7 @@
         ]
       },
       "Export": {
-        "Name": "sls-mongo-hicetnunc-dev-ServiceEndpoint"
+        "Name": "sls-api-v3-dev-ServiceEndpoint"
       }
     }
   }

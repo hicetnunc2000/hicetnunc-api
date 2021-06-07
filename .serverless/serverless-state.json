@@ -1,8 +1,8 @@
 {
   "service": {
-    "service": "mongo-hicetnunc",
+    "service": "api-v3",
     "serviceObject": {
-      "name": "mongo-hicetnunc"
+      "name": "api-v3"
     },
     "provider": {
       "name": "aws",
@@ -87,7 +87,7 @@
           "HandlerLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "LogGroupName": "/aws/lambda/mongo-hicetnunc-dev-handler"
+              "LogGroupName": "/aws/lambda/api-v3-dev-handler"
             }
           },
           "IamRoleLambdaExecution": {
@@ -115,7 +115,7 @@
                     "Fn::Join": [
                       "-",
                       [
-                        "mongo-hicetnunc",
+                        "api-v3",
                         "dev",
                         "lambda"
                       ]
@@ -132,7 +132,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/mongo-hicetnunc-dev*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-v3-dev*:*"
                           }
                         ]
                       },
@@ -143,7 +143,7 @@
                         ],
                         "Resource": [
                           {
-                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/mongo-hicetnunc-dev*:*:*"
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/api-v3-dev*:*:*"
                           }
                         ]
                       }
@@ -156,7 +156,7 @@
                 "Fn::Join": [
                   "-",
                   [
-                    "mongo-hicetnunc",
+                    "api-v3",
                     "dev",
                     {
                       "Ref": "AWS::Region"
@@ -174,11 +174,11 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/mongo-hicetnunc/dev/1621929761092-2021-05-25T08:02:41.092Z/mongo-hicetnunc.zip"
+                "S3Key": "serverless/api-v3/dev/1623089185491-2021-06-07T18:06:25.491Z/api-v3.zip"
               },
-              "Handler": "handler.database",
+              "Handler": "handler.v3",
               "Runtime": "nodejs12.x",
-              "FunctionName": "mongo-hicetnunc-dev-handler",
+              "FunctionName": "api-v3-dev-handler",
               "MemorySize": 1024,
               "Timeout": 6,
               "Role": {
@@ -192,20 +192,20 @@
               "HandlerLogGroup"
             ]
           },
-          "HandlerLambdaVersionZQy3oNzNsuyPKGCJ3mltEPnTczSy1CxiOxom5KgYvw": {
+          "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "HandlerLambdaFunction"
               },
-              "CodeSha256": "83p7LCQNIOwZTlEraX6uCyOIjeBwP0uBc4wsscN8Vuc="
+              "CodeSha256": "JM09ACzIn+qR8vgr62klR9Z4YLYcWn6aQj5+gXB+AOE="
             }
           },
           "ApiGatewayRestApi": {
             "Type": "AWS::ApiGateway::RestApi",
             "Properties": {
-              "Name": "dev-mongo-hicetnunc",
+              "Name": "dev-api-v3",
               "EndpointConfiguration": {
                 "Types": [
                   "EDGE"
@@ -411,7 +411,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1621929754126": {
+          "ApiGatewayDeployment1623089179782": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -470,16 +470,16 @@
               "Ref": "ServerlessDeploymentBucket"
             },
             "Export": {
-              "Name": "sls-mongo-hicetnunc-dev-ServerlessDeploymentBucketName"
+              "Name": "sls-api-v3-dev-ServerlessDeploymentBucketName"
             }
           },
           "HandlerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HandlerLambdaVersionZQy3oNzNsuyPKGCJ3mltEPnTczSy1CxiOxom5KgYvw"
+              "Ref": "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc"
             },
             "Export": {
-              "Name": "sls-mongo-hicetnunc-dev-HandlerLambdaFunctionQualifiedArn"
+              "Name": "sls-api-v3-dev-HandlerLambdaFunctionQualifiedArn"
             }
           },
           "ServiceEndpoint": {
@@ -505,7 +505,7 @@
               ]
             },
             "Export": {
-              "Name": "sls-mongo-hicetnunc-dev-ServiceEndpoint"
+              "Name": "sls-api-v3-dev-ServiceEndpoint"
             }
           }
         }
@@ -600,7 +600,7 @@
     "pluginsData": {},
     "functions": {
       "handler": {
-        "handler": "handler.database",
+        "handler": "handler.v3",
         "events": [
           {
             "http": {
@@ -649,13 +649,13 @@
             }
           }
         ],
-        "name": "mongo-hicetnunc-dev-handler",
+        "name": "api-v3-dev-handler",
         "package": {},
         "memory": 1024,
         "timeout": 6,
         "runtime": "nodejs12.x",
         "vpc": {},
-        "versionLogicalId": "HandlerLambdaVersionZQy3oNzNsuyPKGCJ3mltEPnTczSy1CxiOxom5KgYvw"
+        "versionLogicalId": "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc"
       }
     },
     "configValidationMode": "warn",
@@ -684,278 +684,14 @@
           "node_modules/dotenv/types/test.ts",
           "node_modules/dotenv/types/tsconfig.json",
           "node_modules/dotenv/types/tslint.json",
-          "node_modules/mongodb/HISTORY.md",
-          "node_modules/mongodb/index.js",
-          "node_modules/mongodb/lib/admin.js",
-          "node_modules/mongodb/lib/aggregation_cursor.js",
-          "node_modules/mongodb/lib/apm.js",
-          "node_modules/mongodb/lib/async/async_iterator.js",
-          "node_modules/mongodb/lib/bulk/common.js",
-          "node_modules/mongodb/lib/bulk/ordered.js",
-          "node_modules/mongodb/lib/bulk/unordered.js",
-          "node_modules/mongodb/lib/change_stream.js",
-          "node_modules/mongodb/lib/cmap/connection_pool.js",
-          "node_modules/mongodb/lib/cmap/connection.js",
-          "node_modules/mongodb/lib/cmap/errors.js",
-          "node_modules/mongodb/lib/cmap/events.js",
-          "node_modules/mongodb/lib/cmap/message_stream.js",
-          "node_modules/mongodb/lib/cmap/stream_description.js",
-          "node_modules/mongodb/lib/collection.js",
-          "node_modules/mongodb/lib/command_cursor.js",
-          "node_modules/mongodb/lib/constants.js",
-          "node_modules/mongodb/lib/core/auth/auth_provider.js",
-          "node_modules/mongodb/lib/core/auth/defaultAuthProviders.js",
-          "node_modules/mongodb/lib/core/auth/gssapi.js",
-          "node_modules/mongodb/lib/core/auth/mongo_credentials.js",
-          "node_modules/mongodb/lib/core/auth/mongocr.js",
-          "node_modules/mongodb/lib/core/auth/mongodb_aws.js",
-          "node_modules/mongodb/lib/core/auth/plain.js",
-          "node_modules/mongodb/lib/core/auth/scram.js",
-          "node_modules/mongodb/lib/core/auth/x509.js",
-          "node_modules/mongodb/lib/core/connection/apm.js",
-          "node_modules/mongodb/lib/core/connection/command_result.js",
-          "node_modules/mongodb/lib/core/connection/commands.js",
-          "node_modules/mongodb/lib/core/connection/connect.js",
-          "node_modules/mongodb/lib/core/connection/connection.js",
-          "node_modules/mongodb/lib/core/connection/logger.js",
-          "node_modules/mongodb/lib/core/connection/msg.js",
-          "node_modules/mongodb/lib/core/connection/pool.js",
-          "node_modules/mongodb/lib/core/connection/utils.js",
-          "node_modules/mongodb/lib/core/cursor.js",
-          "node_modules/mongodb/lib/core/error.js",
-          "node_modules/mongodb/lib/core/index.js",
-          "node_modules/mongodb/lib/core/sdam/common.js",
-          "node_modules/mongodb/lib/core/sdam/events.js",
-          "node_modules/mongodb/lib/core/sdam/monitor.js",
-          "node_modules/mongodb/lib/core/sdam/server_description.js",
-          "node_modules/mongodb/lib/core/sdam/server_selection.js",
-          "node_modules/mongodb/lib/core/sdam/server.js",
-          "node_modules/mongodb/lib/core/sdam/srv_polling.js",
-          "node_modules/mongodb/lib/core/sdam/topology_description.js",
-          "node_modules/mongodb/lib/core/sdam/topology.js",
-          "node_modules/mongodb/lib/core/sessions.js",
-          "node_modules/mongodb/lib/core/tools/smoke_plugin.js",
-          "node_modules/mongodb/lib/core/topologies/mongos.js",
-          "node_modules/mongodb/lib/core/topologies/read_preference.js",
-          "node_modules/mongodb/lib/core/topologies/replset_state.js",
-          "node_modules/mongodb/lib/core/topologies/replset.js",
-          "node_modules/mongodb/lib/core/topologies/server.js",
-          "node_modules/mongodb/lib/core/topologies/shared.js",
-          "node_modules/mongodb/lib/core/transactions.js",
-          "node_modules/mongodb/lib/core/uri_parser.js",
-          "node_modules/mongodb/lib/core/utils.js",
-          "node_modules/mongodb/lib/core/wireprotocol/command.js",
-          "node_modules/mongodb/lib/core/wireprotocol/compression.js",
-          "node_modules/mongodb/lib/core/wireprotocol/constants.js",
-          "node_modules/mongodb/lib/core/wireprotocol/get_more.js",
-          "node_modules/mongodb/lib/core/wireprotocol/index.js",
-          "node_modules/mongodb/lib/core/wireprotocol/kill_cursors.js",
-          "node_modules/mongodb/lib/core/wireprotocol/query.js",
-          "node_modules/mongodb/lib/core/wireprotocol/shared.js",
-          "node_modules/mongodb/lib/core/wireprotocol/write_command.js",
-          "node_modules/mongodb/lib/cursor.js",
-          "node_modules/mongodb/lib/db.js",
-          "node_modules/mongodb/lib/dynamic_loaders.js",
-          "node_modules/mongodb/lib/encrypter.js",
-          "node_modules/mongodb/lib/error.js",
-          "node_modules/mongodb/lib/explain.js",
-          "node_modules/mongodb/lib/gridfs-stream/download.js",
-          "node_modules/mongodb/lib/gridfs-stream/index.js",
-          "node_modules/mongodb/lib/gridfs-stream/upload.js",
-          "node_modules/mongodb/lib/gridfs/chunk.js",
-          "node_modules/mongodb/lib/gridfs/grid_store.js",
-          "node_modules/mongodb/lib/mongo_client.js",
-          "node_modules/mongodb/lib/operations/add_user.js",
-          "node_modules/mongodb/lib/operations/admin_ops.js",
-          "node_modules/mongodb/lib/operations/aggregate.js",
-          "node_modules/mongodb/lib/operations/bulk_write.js",
-          "node_modules/mongodb/lib/operations/collection_ops.js",
-          "node_modules/mongodb/lib/operations/collections.js",
-          "node_modules/mongodb/lib/operations/command_v2.js",
-          "node_modules/mongodb/lib/operations/command.js",
-          "node_modules/mongodb/lib/operations/common_functions.js",
-          "node_modules/mongodb/lib/operations/connect.js",
-          "node_modules/mongodb/lib/operations/count_documents.js",
-          "node_modules/mongodb/lib/operations/count.js",
-          "node_modules/mongodb/lib/operations/create_collection.js",
-          "node_modules/mongodb/lib/operations/create_indexes.js",
-          "node_modules/mongodb/lib/operations/cursor_ops.js",
-          "node_modules/mongodb/lib/operations/db_ops.js",
-          "node_modules/mongodb/lib/operations/delete_many.js",
-          "node_modules/mongodb/lib/operations/delete_one.js",
-          "node_modules/mongodb/lib/operations/distinct.js",
-          "node_modules/mongodb/lib/operations/drop_index.js",
-          "node_modules/mongodb/lib/operations/drop_indexes.js",
-          "node_modules/mongodb/lib/operations/drop.js",
-          "node_modules/mongodb/lib/operations/estimated_document_count.js",
-          "node_modules/mongodb/lib/operations/execute_db_admin_command.js",
-          "node_modules/mongodb/lib/operations/execute_operation.js",
-          "node_modules/mongodb/lib/operations/find_and_modify.js",
-          "node_modules/mongodb/lib/operations/find_one_and_delete.js",
-          "node_modules/mongodb/lib/operations/find_one_and_replace.js",
-          "node_modules/mongodb/lib/operations/find_one_and_update.js",
-          "node_modules/mongodb/lib/operations/find_one.js",
-          "node_modules/mongodb/lib/operations/find.js",
-          "node_modules/mongodb/lib/operations/geo_haystack_search.js",
-          "node_modules/mongodb/lib/operations/index_exists.js",
-          "node_modules/mongodb/lib/operations/index_information.js",
-          "node_modules/mongodb/lib/operations/indexes.js",
-          "node_modules/mongodb/lib/operations/insert_many.js",
-          "node_modules/mongodb/lib/operations/insert_one.js",
-          "node_modules/mongodb/lib/operations/is_capped.js",
-          "node_modules/mongodb/lib/operations/list_collections.js",
-          "node_modules/mongodb/lib/operations/list_databases.js",
-          "node_modules/mongodb/lib/operations/list_indexes.js",
-          "node_modules/mongodb/lib/operations/map_reduce.js",
-          "node_modules/mongodb/lib/operations/operation.js",
-          "node_modules/mongodb/lib/operations/options_operation.js",
-          "node_modules/mongodb/lib/operations/profiling_level.js",
-          "node_modules/mongodb/lib/operations/re_index.js",
-          "node_modules/mongodb/lib/operations/remove_user.js",
-          "node_modules/mongodb/lib/operations/rename.js",
-          "node_modules/mongodb/lib/operations/replace_one.js",
-          "node_modules/mongodb/lib/operations/run_command.js",
-          "node_modules/mongodb/lib/operations/set_profiling_level.js",
-          "node_modules/mongodb/lib/operations/stats.js",
-          "node_modules/mongodb/lib/operations/update_many.js",
-          "node_modules/mongodb/lib/operations/update_one.js",
-          "node_modules/mongodb/lib/operations/validate_collection.js",
-          "node_modules/mongodb/lib/read_concern.js",
-          "node_modules/mongodb/lib/topologies/mongos.js",
-          "node_modules/mongodb/lib/topologies/native_topology.js",
-          "node_modules/mongodb/lib/topologies/replset.js",
-          "node_modules/mongodb/lib/topologies/server.js",
-          "node_modules/mongodb/lib/topologies/topology_base.js",
-          "node_modules/mongodb/lib/url_parser.js",
-          "node_modules/mongodb/lib/utils.js",
-          "node_modules/mongodb/lib/write_concern.js",
-          "node_modules/mongodb/LICENSE.md",
-          "node_modules/mongodb/package.json",
-          "node_modules/mongodb/README.md",
-          "node_modules/saslprep/CHANGELOG.md",
-          "node_modules/saslprep/code-points.mem",
-          "node_modules/saslprep/generate-code-points.js",
-          "node_modules/saslprep/index.js",
-          "node_modules/saslprep/lib/code-points.js",
-          "node_modules/saslprep/lib/memory-code-points.js",
-          "node_modules/saslprep/lib/util.js",
-          "node_modules/saslprep/LICENSE",
-          "node_modules/saslprep/package.json",
-          "node_modules/saslprep/readme.md",
-          "node_modules/saslprep/test/index.js",
-          "node_modules/saslprep/test/util.js",
-          "node_modules/sparse-bitfield/index.js",
-          "node_modules/sparse-bitfield/LICENSE",
-          "node_modules/sparse-bitfield/package.json",
-          "node_modules/sparse-bitfield/README.md",
-          "node_modules/sparse-bitfield/test.js",
-          "node_modules/memory-pager/index.js",
-          "node_modules/memory-pager/LICENSE",
-          "node_modules/memory-pager/package.json",
-          "node_modules/memory-pager/README.md",
-          "node_modules/memory-pager/test.js",
-          "node_modules/safe-buffer/index.d.ts",
-          "node_modules/safe-buffer/index.js",
-          "node_modules/safe-buffer/LICENSE",
-          "node_modules/safe-buffer/package.json",
-          "node_modules/safe-buffer/README.md",
-          "node_modules/optional-require/index.js",
-          "node_modules/optional-require/package.json",
-          "node_modules/optional-require/README.md",
-          "node_modules/denque/CHANGELOG.md",
-          "node_modules/denque/index.d.ts",
-          "node_modules/denque/index.js",
-          "node_modules/denque/LICENSE",
-          "node_modules/denque/package.json",
-          "node_modules/denque/README.md",
-          "node_modules/bson/bower.json",
-          "node_modules/bson/browser_build/bson.js",
-          "node_modules/bson/browser_build/package.json",
-          "node_modules/bson/HISTORY.md",
-          "node_modules/bson/index.js",
-          "node_modules/bson/lib/bson/binary.js",
-          "node_modules/bson/lib/bson/bson.js",
-          "node_modules/bson/lib/bson/code.js",
-          "node_modules/bson/lib/bson/db_ref.js",
-          "node_modules/bson/lib/bson/decimal128.js",
-          "node_modules/bson/lib/bson/double.js",
-          "node_modules/bson/lib/bson/float_parser.js",
-          "node_modules/bson/lib/bson/int_32.js",
-          "node_modules/bson/lib/bson/long.js",
-          "node_modules/bson/lib/bson/map.js",
-          "node_modules/bson/lib/bson/max_key.js",
-          "node_modules/bson/lib/bson/min_key.js",
-          "node_modules/bson/lib/bson/objectid.js",
-          "node_modules/bson/lib/bson/parser/calculate_size.js",
-          "node_modules/bson/lib/bson/parser/deserializer.js",
-          "node_modules/bson/lib/bson/parser/serializer.js",
-          "node_modules/bson/lib/bson/parser/utils.js",
-          "node_modules/bson/lib/bson/regexp.js",
-          "node_modules/bson/lib/bson/symbol.js",
-          "node_modules/bson/lib/bson/timestamp.js",
-          "node_modules/bson/LICENSE.md",
-          "node_modules/bson/package.json",
-          "node_modules/bson/README.md",
-          "node_modules/bl/bl.js",
-          "node_modules/bl/LICENSE.md",
-          "node_modules/bl/package.json",
-          "node_modules/bl/README.md",
-          "node_modules/bl/test/indexOf.js",
-          "node_modules/bl/test/test.js",
-          "node_modules/readable-stream/CONTRIBUTING.md",
-          "node_modules/readable-stream/doc/wg-meetings/2015-01-30.md",
-          "node_modules/readable-stream/duplex-browser.js",
-          "node_modules/readable-stream/duplex.js",
-          "node_modules/readable-stream/GOVERNANCE.md",
-          "node_modules/readable-stream/lib/_stream_duplex.js",
-          "node_modules/readable-stream/lib/_stream_passthrough.js",
-          "node_modules/readable-stream/lib/_stream_readable.js",
-          "node_modules/readable-stream/lib/_stream_transform.js",
-          "node_modules/readable-stream/lib/_stream_writable.js",
-          "node_modules/readable-stream/lib/internal/streams/BufferList.js",
-          "node_modules/readable-stream/lib/internal/streams/destroy.js",
-          "node_modules/readable-stream/lib/internal/streams/stream-browser.js",
-          "node_modules/readable-stream/lib/internal/streams/stream.js",
-          "node_modules/readable-stream/LICENSE",
-          "node_modules/readable-stream/package.json",
-          "node_modules/readable-stream/passthrough.js",
-          "node_modules/readable-stream/readable-browser.js",
-          "node_modules/readable-stream/readable.js",
-          "node_modules/readable-stream/README.md",
-          "node_modules/readable-stream/transform.js",
-          "node_modules/readable-stream/writable-browser.js",
-          "node_modules/readable-stream/writable.js",
-          "node_modules/util-deprecate/browser.js",
-          "node_modules/util-deprecate/History.md",
-          "node_modules/util-deprecate/LICENSE",
-          "node_modules/util-deprecate/node.js",
-          "node_modules/util-deprecate/package.json",
-          "node_modules/util-deprecate/README.md",
-          "node_modules/string_decoder/lib/string_decoder.js",
-          "node_modules/string_decoder/LICENSE",
-          "node_modules/string_decoder/package.json",
-          "node_modules/string_decoder/README.md",
-          "node_modules/process-nextick-args/index.js",
-          "node_modules/process-nextick-args/license.md",
-          "node_modules/process-nextick-args/package.json",
-          "node_modules/process-nextick-args/readme.md",
-          "node_modules/isarray/component.json",
-          "node_modules/isarray/index.js",
-          "node_modules/isarray/Makefile",
-          "node_modules/isarray/package.json",
-          "node_modules/isarray/README.md",
-          "node_modules/isarray/test.js",
-          "node_modules/inherits/inherits_browser.js",
-          "node_modules/inherits/inherits.js",
-          "node_modules/inherits/LICENSE",
-          "node_modules/inherits/package.json",
-          "node_modules/inherits/README.md",
-          "node_modules/core-util-is/float.patch",
-          "node_modules/core-util-is/lib/util.js",
-          "node_modules/core-util-is/LICENSE",
-          "node_modules/core-util-is/package.json",
-          "node_modules/core-util-is/README.md",
-          "node_modules/core-util-is/test.js",
+          "node_modules/node-fetch/browser.js",
+          "node_modules/node-fetch/CHANGELOG.md",
+          "node_modules/node-fetch/lib/index.es.js",
+          "node_modules/node-fetch/lib/index.js",
+          "node_modules/node-fetch/lib/index.mjs",
+          "node_modules/node-fetch/LICENSE.md",
+          "node_modules/node-fetch/package.json",
+          "node_modules/node-fetch/README.md",
           "node_modules/axios/CHANGELOG.md",
           "node_modules/axios/dist/axios.js",
           "node_modules/axios/dist/axios.map",
@@ -1183,6 +919,11 @@
           "node_modules/toidentifier/LICENSE",
           "node_modules/toidentifier/package.json",
           "node_modules/toidentifier/README.md",
+          "node_modules/inherits/inherits_browser.js",
+          "node_modules/inherits/inherits.js",
+          "node_modules/inherits/LICENSE",
+          "node_modules/inherits/package.json",
+          "node_modules/inherits/README.md",
           "node_modules/depd/History.md",
           "node_modules/depd/index.js",
           "node_modules/depd/lib/browser/index.js",
@@ -1237,6 +978,11 @@
           "node_modules/parseurl/LICENSE",
           "node_modules/parseurl/package.json",
           "node_modules/parseurl/README.md",
+          "node_modules/safe-buffer/index.d.ts",
+          "node_modules/safe-buffer/index.js",
+          "node_modules/safe-buffer/LICENSE",
+          "node_modules/safe-buffer/package.json",
+          "node_modules/safe-buffer/README.md",
           "node_modules/qs/CHANGELOG.md",
           "node_modules/qs/dist/qs.js",
           "node_modules/qs/lib/formats.js",
@@ -1384,8 +1130,8 @@
           "node_modules/negotiator/package.json",
           "node_modules/negotiator/README.md"
         ],
-        "artifact": "/home/crzy/Desktop/programs/mongo-final/mongo/mongodb-hicetnunc/.serverless/mongo-hicetnunc.zip",
-        "artifactDirectoryName": "serverless/mongo-hicetnunc/dev/1621929761092-2021-05-25T08:02:41.092Z"
+        "artifact": "/home/crzy/Desktop/programs/mongo-final/mongo/graphql-api/.serverless/api-v3.zip",
+        "artifactDirectoryName": "serverless/api-v3/dev/1623089185491-2021-06-07T18:06:25.491Z"
       },
       "plugins": {
         "$ref": "$[\"service\"][\"plugins\"]"
@@ -1398,10 +1144,10 @@
       }
     },
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/home/crzy/Desktop/programs/mongo-final/mongo/mongodb-hicetnunc/.serverless/mongo-hicetnunc.zip"
+    "artifact": "/home/crzy/Desktop/programs/mongo-final/mongo/graphql-api/.serverless/api-v3.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/mongo-hicetnunc/dev/1621929761092-2021-05-25T08:02:41.092Z",
-    "artifact": "mongo-hicetnunc.zip"
+    "artifactDirectoryName": "serverless/api-v3/dev/1623089185491-2021-06-07T18:06:25.491Z",
+    "artifact": "api-v3.zip"
   }
 }
