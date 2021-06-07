@@ -220,11 +220,9 @@ async function fetchTags(tz) {
 }
 */
 
-const getRestrictedAddresses = async () => {
+const getRestrictedAddresses = async () => await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
 
-  return await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
-
-}
+const getRestrictedObjkts = async () => await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/o.json').then(res => res.data)
 
 app.post('/creations', async (req, res) => {
 
