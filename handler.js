@@ -33,6 +33,7 @@ query LatestFeed($lastId: bigint = 99999999) {
 const query_objkt = `
 query objkt($id: bigint!) {
   hic_et_nunc_token_by_pk(id: $id) {
+    id
     mime
     timestamp
     display_uri
@@ -40,6 +41,7 @@ query objkt($id: bigint!) {
     artifact_uri
     creator {
       address
+      name
     }
     thumbnail_uri
     title
@@ -47,9 +49,11 @@ query objkt($id: bigint!) {
     royalties
     swaps(where: {status: {_eq: "0"}}) {
       amount_left
+      id
       price
       creator {
         address
+        name
       }
     }
     token_holders(where: {quantity: {_gt: "0"}}) {
@@ -116,6 +120,9 @@ query creatorGallery($address: String!) {
     title
     description
     supply
+    creator {
+      name
+    }
     token_tags {
       tag {
         tag
@@ -124,6 +131,27 @@ query creatorGallery($address: String!) {
   }
 }
 `
+
+const query_hdao = `query hDAOFeed($offset: Int = 0) {
+  hic_et_nunc_token(order_by: {hdao_balance: desc}, limit: 50, where: {hdao_balance: {_gt: 100}}, offset: $offset) {
+    artifact_uri
+    display_uri
+    creator_id
+    id
+    mime
+    thumbnail_uri
+    timestamp
+    title
+    hdao_balance
+  }
+}`
+
+const query_tag = `query ObjktsByTag($tag: String = "3d", $lastId: bigint = 99999999) {
+  hic_et_nunc_token(where: {token_tags: {tag: {tag: {_eq: $tag}}}, id: {_lt: $lastId}, supply: {_gt: "0"}}, limit: 250, order_by: {id: desc}) {
+    id
+    title
+  }
+}`
 
 async function fetchGraphQL(operationsDoc, operationName, variables) {
   const result = await fetch(
@@ -142,11 +170,54 @@ async function fetchGraphQL(operationsDoc, operationName, variables) {
 }
 
 //
+// Random
+//
+
+async function fetchObjkts(ids) {
+  console.log(ids)
+  const { errors, data } = await fetchGraphQL(`
+    query Objkts($_in: [bigint!] = "") {
+      hic_et_nunc_token(where: { id: {_in: $_in}}) {
+        title
+      }
+    }`, "Objkts", { "id" : ids });
+    console.log(data)
+  return data.hic_et_nunc_token
+}
+
+async function getLastId() {
+  const { errors, data } = await fetchGraphQL(`
+    query LastId {
+      hic_et_nunc_token(limit: 1, order_by: {id: desc}) {
+        id
+      }
+    }`, "LastId");
+  return data.hic_et_nunc_token[0].id
+}
+
+function rnd(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+async function fetchRandom() {
+  const firstId = 156
+  const lastId = await getLastId()
+
+  const uniqueIds = new Set()
+  while (uniqueIds.size < 50) {
+    uniqueIds.add(rnd(firstId, lastId))
+  }
+  console.log(uniqueIds)
+
+  return fetchObjkts(Array.from(uniqueIds))
+}
+
+//
 // OBJKT
 //
 
 async function fetchObjkt(id) {
-  const { errors, data } = await fetchGraphQL(query_objkt, "objkt", { "id": id });
+  const { errors, data } = await fetchGraphQL(query_objkt, "objkt", { "id" : id });
   if (errors) {
     console.error(errors);
   }
@@ -193,32 +264,34 @@ async function fetchFeed(lastId) {
   return result
 }
 
-/*
-async function fetchTagsGraphQL(operationsDoc, operationName, variables) {
-  const result = await fetch(
-    "https://api.hicdex.com/v1/graphql",
-    {
-      method: "POST",
-      body: JSON.stringify({
-        query: operationsDoc,
-        variables: variables,
-        operationName: operationName
-      })
-    }
-  );
-  return await result.json()
-}
+//
+// hDAO
+//
 
-async function fetchTags(tz) {
-  const { errors, data } = await fetchTagsGraphQL(query_creations, "tags", { "address": tz });
+async function fetchHdao(offset) {
+  const { errors, data } = await fetchGraphQL(query_hdao, "hDAOFeed", { "offset": offset });
   if (errors) {
     console.error(errors);
   }
   const result = data.hic_et_nunc_token
-  console.log(result)
+  /* console.log({ result }) */
   return result
 }
-*/
+
+//
+// Tags
+//
+
+async function fetchTag(tag) {
+  const { errors, data } = await fetchGraphQL(query_tag, "ObjktsByTag", { "tag" : tag });
+  if (errors) {
+    console.error(errors);
+  }
+  const result = data.hic_et_nunc_token
+  /* console.log({ result }) */
+  return result
+}
+
 
 const getRestrictedAddresses = async () => await axios.get('https://raw.githubusercontent.com/hicetnunc2000/hicetnunc/main/filters/w.json').then(res => res.data)
 
@@ -258,9 +331,22 @@ app.post('/feed', async (req, res) => {
   res.json(await fetchFeed(req.body.lastId))
 })
 
-app.get('/tag', async (req, res) => {
-  await getTag(req, res)
+app.post('/hdao', async (req, res) => {
+  res.json(await fetchHdao(req.body.offset))
 })
 
-//app.listen(3002)
-module.exports.v3 = serverless(app)
+app.post('/random', async (req, res) => {
+  res.json(await fetchRandom())
+})
+
+app.post('/tag', async (req, res) => {
+  res.json(await fetchTag(req.body.tag))
+})
+
+app.post('/subjkt', async (req, res) => {
+  res.json(await fetchSubjkt(req.body.subjkt))
+})
+// 1/1
+
+app.listen(3002)
+//module.exports.v3 = serverless(app)

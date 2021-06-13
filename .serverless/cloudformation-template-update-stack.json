@@ -161,7 +161,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/api-v3/dev/1623089185491-2021-06-07T18:06:25.491Z/api-v3.zip"
+          "S3Key": "serverless/api-v3/dev/1623593251444-2021-06-13T14:07:31.444Z/api-v3.zip"
         },
         "Handler": "handler.v3",
         "Runtime": "nodejs12.x",
@@ -179,14 +179,14 @@
         "HandlerLogGroup"
       ]
     },
-    "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc": {
+    "HandlerLambdaVersioniBo0h1G0X2KxCSCMnAaaHHS9zPHaIj2HMYD0vC2u5s": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "HandlerLambdaFunction"
         },
-        "CodeSha256": "JM09ACzIn+qR8vgr62klR9Z4YLYcWn6aQj5+gXB+AOE="
+        "CodeSha256": "C0O69ZDF4lyfIrlDqk7SvinJh33sI/Kvyi65TjaTmZI="
       }
     },
     "ApiGatewayRestApi": {
@@ -398,7 +398,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1623089179782": {
+    "ApiGatewayDeployment1623593245523": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -463,7 +463,7 @@
     "HandlerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "HandlerLambdaVersioniDq1o44EiyISN5R480tF6J8S51qzMJdYejKr3Impgc"
+        "Ref": "HandlerLambdaVersioniBo0h1G0X2KxCSCMnAaaHHS9zPHaIj2HMYD0vC2u5s"
       },
       "Export": {
         "Name": "sls-api-v3-dev-HandlerLambdaFunctionQualifiedArn"
